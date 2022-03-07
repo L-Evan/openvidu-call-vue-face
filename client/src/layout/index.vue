@@ -33,7 +33,7 @@ export default {
       return this.$store.state.app.device
     },
     fixedHeader() {
-      console.log("现在的fixe",this.$store.state.settings.fixedHeader)
+      console.log("now fixe",this.$store.state.settings.fixedHeader)
       return this.$store.state.settings.fixedHeader
     },
     classObj() {

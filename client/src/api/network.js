@@ -16,7 +16,7 @@ axios.defaults.timeout = 5000
 // 添加请求拦截器
 axios.interceptors.request.use(function (config) {
   // 在发送请求之前做些什么
-  console.log("请求,token:", all_stroy.getToken(),config)
+  console.log("请求前的token:", all_stroy.getToken(),config)
   config.headers["x-authorization"] = all_stroy.getToken()
   
   return config
@@ -35,7 +35,8 @@ axios.interceptors.response.use(function (response) {
   }
   console.log(response.data.code,String(response.data.code).charAt(0))
   // 2开头才是真成功
-  if (String(response.data.code).charAt(0) ==="2") {
+  // response.data.token 是临时的
+  if (String(response.data.code).charAt(0) ==="2" || response.data.token) {
     return response
   }
   asyncErrorHandler(response.data)
