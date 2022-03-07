@@ -1,0 +1,14 @@
+{
+    "presets": [
+        // 支持JSX 标签语法 reactive
+        "@vue/app",
+        [ "@babel/preset-env", {
+            "targets": {},
+            "useBuiltIns": false,
+            "corejs": false
+        }] 
+    ],
+    "plugins": [
+        "@babel/plugin-proposal-class-properties"
+    ]
+}  
