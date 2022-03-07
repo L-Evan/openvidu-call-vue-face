@@ -1,3 +1,4 @@
+// /*global  __dirname*/
 // 配置打包 
 // const path = require("path")
 const webpackConfig = require("./webpack.config.js")
@@ -9,8 +10,8 @@ module.exports =  WebpackMerge.merge(webpackConfig,{
   mode: "production", // 开发模式 
   // plugins: [
   //   new CopyWebpackPlugin([{ //复制文件到导出目录
-  //     from:path.resolve(__dirname,'../public'),
-  //     to:path.resolve(__dirname,'../dist')
+  //     from: path.resolve(__dirname,"../public"),
+  //     to: path.resolve(__dirname,"../dist")
   //   }]),
   // ],
   optimization: {

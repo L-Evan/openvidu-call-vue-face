@@ -1,4 +1,5 @@
 /*global process, __dirname*/
+
 // 配置打包 
 const path = require("path")
 //jquery
@@ -18,15 +19,15 @@ const devMode = process.env.npm_lifecycle_event.indexOf("prod") === -1
 console.log("现在的环境：" + process.env.npm_lifecycle_event)
 //console.log(process.env.npm_lifecycle_event)
 
-module.exports = {
-  
+module.exports = { 
+
   // 入口文件 如果 polyfill 解决新api问题
   entry: [path.resolve(__dirname, "../src/main.js")],
   //导出
   output: {
     filename: "[name].[chunkhash:8].js",      // 打包后的文件名称 [name].[chunkhash:8].js [name].[chunkhash:8]
     path: path.resolve(__dirname, "../dist"), // 打包后的目录
-    assetModuleFilename: "images/[hash][ext][query]" //自定义webpack5资源导出路径
+    assetModuleFilename: "images/[hash][ext][query]" //自定义webpack5资源导出路径 
   },
   //插件
   plugins: [
@@ -147,7 +148,7 @@ module.exports = {
         // 加载fontsvg  SVG 转换为 utf-8 编码的 DataUrl 字符串
         test: /\.svg/, 
         loader:"svg-url-loader" ,
-        include:   path.resolve(__dirname,"../src/asset") , 
+        include:   path.resolve(__dirname,"../src/assets") , 
            
       },
       {
@@ -158,7 +159,7 @@ module.exports = {
       { test: /\.(eot|woff|ttf)$/, loader: "file-loader" }
     ]
   },
-  resolve: {
+  resolve: { 
     alias: {  //别名  
       //运行时版本相比完整版体积要小大约 30%
       "vue$": "vue/dist/vue.runtime.esm.js",
@@ -167,6 +168,10 @@ module.exports = {
     },
     // path  sidebarItem 报错的时候嘉的
     fallback: {
+      //关闭fs检测，因为face.js可以需要
+      // crypto和fs opencv也都用到了
+      crypto:false,
+      fs: false, 
       "path": require.resolve("path-browserify")
     },
     extensions: ["*", ".js", ".json", ".vue"]
