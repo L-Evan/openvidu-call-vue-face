@@ -100,8 +100,7 @@
     </div>
   </div>
 </template>
-<script>
-// import "@/asset/jsp/css/style.css"
+<script> 
 import CommonPage from "@/lib/utils/mixin/CommonPage"
 import Api from "@/api/user_info"
 export default {
@@ -164,9 +163,4 @@ export default {
   ROUTER_NAME: "login",
   extends: CommonPage,
 }
-</script>
-<style src="@/asset/jsp/css/style.css"  scoped></style>
-<style src="@/asset/jsp/css/global.css"  scoped></style> 
-<style src="@/asset/jsp/layui/css/layui.css" scoped>
- 
-</style>
+</script> 

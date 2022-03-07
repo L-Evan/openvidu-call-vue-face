@@ -23,10 +23,7 @@ import "element-ui/lib/theme-chalk/index.css"
 import "@/icons" // icon
 import "@/styles/index.scss" // global css
 //??
-import "normalize.css/normalize.css" // A modern alternative to CSS resets
-// layui
-import "@/asset/jsp/icheck/minimal/red.css" 
-import  "@/asset/jsp/css/global.css" 
+import "normalize.css/normalize.css" // A modern alternative to CSS resets 
 
 import "./permission.js"
 // bootstrap

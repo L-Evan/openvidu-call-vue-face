@@ -209,11 +209,6 @@ export default {
   },
   extends: CommonPage,
 }
-</script>
-   
-<style src="@/asset/jsp/layui/css/layui.css"  scoped></style>
-<style scoped>
-el-select-dropdown__item{
-
-}
+</script> 
+<style scoped> 
 </style>

@@ -2,7 +2,7 @@
   <div class="selectbody">
     <!--折叠插件显示用户所有信息-->
     <div class="hearderFont">
-      <span>所有用户签到信息</span>
+      <span>参加的会议信息</span>
     </div>
     <!-- <el-divider></el-divider> -->
     <div class="tablearound">
@@ -23,8 +23,7 @@
         >点击签到</el-button
       >
       <el-divider style="margin: 10px" direction="vertical"></el-divider>
-      <el-popover placement="right" width="100" trigger="click">
-        <img src="@/asset/jsp/1.png" style="width: 100px; height: 100px" />
+      <el-popover placement="right" width="100" trigger="click"> 
         <el-button slot="reference" type="primary" icon="el-icon-menu"
           >二维码</el-button
         >
@@ -122,7 +121,7 @@ import eMap from "@/components/amap"
 import Api from "@/api/message/message"
 export default {
   ROUTER_ICON: "el-icon-s-help",
-  ROUTER_TITLE: "值班签到表",
+  ROUTER_TITLE: "会议记录表",
   ROUTER_NAME: "message", 
   ROUTER_HIDDEN:false,
   components:{
