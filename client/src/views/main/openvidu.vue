@@ -2,7 +2,9 @@
   <div id="main-container" class="container">
     <div id="join" v-if="!session">
       <div id="img-div">
-        <img src="@/assets/resources/images/openvidu_grey_bg_transp_cropped.png" />
+        <img
+          src="@/assets/resources/images/openvidu_grey_bg_transp_cropped.png"
+        />
       </div>
       <div id="join-dialog" class="jumbotron vertical-center">
         <h1>Join a video session</h1>
@@ -70,11 +72,13 @@
 </template>
 
 <script>
-
 import CommonPage from "@/lib/utils/mixin/CommonPage"
+import { getToken, removeToken } from "@/api/openvidu/openvidu"
 import {
   headCheck,
-  mouthStatusCheck,eyeStatusCheck} from "@/utils/openvidu/faceEvaluation"
+  mouthStatusCheck,
+  eyeStatusCheck,
+} from "@/utils/openvidu/faceEvaluation"
 import axios from "axios"
 import { OpenVidu } from "openvidu-browser"
 import UserVideo from "@/components/openvidu/UserVideo"
@@ -90,9 +94,6 @@ import {
   // Box,
 } from "face-api.js"
 axios.defaults.headers.post["Content-Type"] = "application/json"
-
-const OPENVIDU_SERVER_URL = "https://" + location.hostname + ":4443"
-const OPENVIDU_SERVER_SECRET = "MY_SECRET"
 // 人脸识别
 const SSD_MOBILENETV1 = "ssd_mobilenetv1"
 // eslint-disable-next-line no-unused-vars
@@ -124,7 +125,7 @@ export default {
       // canvas: undefined,
       options: {},
       // 检测模式
-      selectedFaceDetector: TINY_FACE_DETECTOR,
+      selectedFaceDetector: SSD_MOBILENETV1,
       OV: undefined,
       session: undefined,
       mainStreamManager: undefined,
@@ -135,7 +136,9 @@ export default {
       myUserName: "Participant" + Math.floor(Math.random() * 100),
     }
   },
-  created() {},
+  async created() {
+    await this.init()
+  },
   computed: {
     video() {
       if (this.publisher && this.publisher.videos.length > 0) {
@@ -145,23 +148,20 @@ export default {
     },
   },
   mounted() {
-    this.init()
     // this.canvas = this.$refs["canvas"];
-  },
+  }, 
   methods: {
     async init() {
-      console.log("初始化")
-      this.selectedFaceDetector = SSD_MOBILENETV1
-      // 加载火焰脸
-      await this.getCurrentFaceDetectionNet().load("/models")
-      // 脸部固定
+      // SSD 移动网络检测模型 // 微型人脸检测器模型
+      await this.getCurrentFaceDetectionNet().loadFromUri("/models")
+      // 脸部固定 68火焰脸
       await nets.faceLandmark68Net.loadFromUri("/models")
       // 检测表情
       await loadFaceExpressionModel("/models")
       console.log("初始化完毕")
     },
     getCurrentFaceDetectionNet() {
-      //  selectedFaceDetector 存储是哪种人脸模型
+      //  selectedFaceDetector 人脸检测模型
       if (this.selectedFaceDetector === SSD_MOBILENETV1) {
         return nets.ssdMobilenetv1
       }
@@ -177,41 +177,23 @@ export default {
         ? new SsdMobilenetv1Options({ minConfidence })
         : new TinyFaceDetectorOptions({ inputSize, scoreThreshold })
     },
-    
+
     /** @name 人脸检测 */
     async detectFace() {
-      //非常重要：防止卡死  按帧数来 一次
-      // await new Promise((resolve) => requestAnimationFrame(resolve));
-
       // 判断模型加载
       if (!this.isFaceDetectionModelLoaded()) {
-        console.log("检测1次")
+        console.log("开始加载数据")
         await this.getCurrentFaceDetectionNet().load("/models")
       }
-      // 获取每个人脸模型的设置
-      // const options=this.getFaceDetectorOptions();
-      // const ts = Date.now();
-      // 检测图像中具有最高置信度得分的脸部,估计option判断使用的方式
-      // let result=await detectSingleFace(this.video, options);
-      // console.log("检测2次");
-      // if(!result)
-      //   return this.detectFaceA();
-      // console.log("我看看人脸怎样", result);
-      // 匹配尺寸 小问题
-      // const dims=matchDimensions(this.canvas, this.video, true);
-      // 调整检测到的框的大小，以防显示的图像的大小与原始 小问题
-      // const resizedResult=resizeResults(result, dims);
-      // 人脸框位置
-      // const box=resizedResult.box;
-      // 检测框是否在取景框内
-      // if(!this.checkInViewFinder(box))
-      //   return this.detectFaceA();
-
+      console.log("---------------检测中------------------")
+      const startTime = Date.now()
       // 开始检测
-      // result = await result.withFaceExpressions(); 
-      const result = await detectSingleFace(this.video).withFaceLandmarks().withFaceExpressions()
+      // result = await result.withFaceExpressions();
+      const result = await detectSingleFace(this.video)
+        .withFaceLandmarks()
+        .withFaceExpressions()
       if (result) {
-        console.log("我看看结果", result)
+        console.log("结果:", result)
         // 疲劳值
         if (result.landmarks._positions) {
           const face68_ = result.landmarks._positions
@@ -232,46 +214,46 @@ export default {
         }
         console.log(faceStr)
       }
-      // console.log("检测时间",Date.now()-ts);
+      console.log("检测时间: " + (Date.now() - startTime))
       // 定时检测
       setTimeout(() => this.detectFace(), 0)
     },
     joinSession() {
-      // --- Get an OpenVidu object ---
-      this.OV = new OpenVidu()
-
-      // --- Init a session ---
-      this.session = this.OV.initSession()
-
-      // --- Specify the actions when events take place in the session ---
-      // On every new Stream received...
-      this.session.on("streamCreated", ({ stream }) => {
-        console.log(stream, "创建一个")
-        const subscriber = this.session.subscribe(stream)
-        this.subscribers.push(subscriber)
-      })
-
-      // On every Stream destroyed...
-      this.session.on("streamDestroyed", ({ stream }) => {
-        const index = this.subscribers.indexOf(stream.streamManager, 0)
-        if (index >= 0) {
-          this.subscribers.splice(index, 1)
-        }
-      })
-
-      // On every asynchronous exception...
-      this.session.on("exception", ({ exception }) => {
-        console.warn(exception)
-      })
-
       // --- Connect to the session with a valid user token ---
       // 'getToken' method is simulating what your server-side should do.
       // 'token' parameter should be retrieved and returned by your own backend
-      this.getToken(this.mySessionId).then((token) => {
+      this.getToken(this.mySessionId).then(({ token }) => {
+        // --- Get an OpenVidu object ---
+        this.OV = new OpenVidu()
 
-        console.log("token ->",token)
+        // --- Init a session ---
+        this.session = this.OV.initSession()
+        this.token = token
+        // --- Specify the actions when events take place in the session ---
+        // On every new Stream received...
+        this.session.on("streamCreated", ({ stream }) => {
+          console.log(stream, "创建一个")
+          const subscriber = this.session.subscribe(stream)
+          this.subscribers.push(subscriber)
+        })
+
+        // On every Stream destroyed...
+        this.session.on("streamDestroyed", ({ stream }) => {
+          const index = this.subscribers.indexOf(stream.streamManager, 0)
+          if (index >= 0) {
+            this.subscribers.splice(index, 1)
+          }
+        })
+
+        // On every asynchronous exception...
+        this.session.on("exception", ({ exception }) => {
+          console.warn(exception)
+        })
+
+        console.log("token ->", token, [token])
         // 第二个参数是每个用户将event.stream.connection.data在事件属性中收到的值
-        this.session.connect(token, { clientData: this.myUserName })
+        this.session
+          .connect(token, { clientData: this.myUserName })
           .then(() => {
             // --- Get your own camera stream with the desired properties ---
             let publisher = this.OV.initPublisher(
@@ -309,8 +291,8 @@ export default {
 
       window.addEventListener("beforeunload", this.leaveSession)
     },
-    sharingScreen(){
-      var OV = new OpenVidu() 
+    sharingScreen() {
+      var OV = new OpenVidu()
       // --- Get your own camera stream with the desired properties ---
       let screenPublisher = OV.initPublisher(
         undefined,
@@ -342,12 +324,14 @@ export default {
 
       // --- Publish your stream ---
       this.session.publish(this.screenPublisher)
-          
+    },
+    removeUser() {
+      removeToken({ sessionName: this.mySessionId, token: this.token })
     },
     leaveSession() {
+      this.removeUser()
       // --- Leave the session by calling 'disconnect' method over the Session object ---
       if (this.session) this.session.disconnect()
-
       this.session = undefined
       this.mainStreamManager = undefined
       this.publisher = undefined
@@ -357,8 +341,8 @@ export default {
     },
 
     updateMainVideoStreamManager(stream) {
-      
       if (this.mainStreamManager === stream) {
+        console.log("start check face")
         this.detectFace()
         return
       }
@@ -380,67 +364,7 @@ export default {
       // return this.createSession(mySessionId).then((sessionId) =>
       //   this.createToken(sessionId)
       // )
-      return this.getTokenOnServer(mySessionId)
-    },
-
-    // See https://docs.openvidu.io/en/stable/reference-docs/REST-API/#post-openviduapisessions
-    createSession(sessionId) {
-      return new Promise((resolve, reject) => {
-        axios
-          .post(
-            `${OPENVIDU_SERVER_URL}/openvidu/api/sessions`,
-            JSON.stringify({
-              customSessionId: sessionId,
-            }),
-            {
-              auth: {
-                username: "OPENVIDUAPP",
-                password: OPENVIDU_SERVER_SECRET,
-              },
-            }
-          )
-          .then((response) => response.data)
-          .then((data) => resolve(data.id))
-          .catch((error) => {
-            if (error.response.status === 409) {
-              resolve(sessionId)
-            } else {
-              console.warn(
-                `No connection to OpenVidu Server. This may be a certificate error at ${OPENVIDU_SERVER_URL}`
-              )
-              if (
-                window.confirm(
-                  `No connection to OpenVidu Server. This may be a certificate error at ${OPENVIDU_SERVER_URL}\n\nClick OK to navigate and accept it. If no certificate warning is shown, then check that your OpenVidu Server is up and running at "${OPENVIDU_SERVER_URL}"`
-                )
-              ) {
-                location.assign(`${OPENVIDU_SERVER_URL}/accept-certificate`)
-              }
-              reject(error.response)
-            }
-          })
-      })
-    },
-    getTokenOnServer(){
-      // sessionId
-    },
-    // See https://docs.openvidu.io/en/stable/reference-docs/REST-API/#post-openviduapisessionsltsession_idgtconnection
-    createToken(sessionId) {
-      return new Promise((resolve, reject) => {
-        axios
-          .post(
-            `${OPENVIDU_SERVER_URL}/openvidu/api/sessions/${sessionId}/connection`,
-            {},
-            {
-              auth: {
-                username: "OPENVIDUAPP",
-                password: OPENVIDU_SERVER_SECRET,
-              },
-            }
-          )
-          .then((response) => response.data)
-          .then((data) => resolve(data.token))
-          .catch((error) => reject(error.response))
-      })
+      return getToken({ sessionName: mySessionId })
     },
   },
 }

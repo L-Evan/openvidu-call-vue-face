@@ -25,11 +25,14 @@ export default {
       return clientData
     },
   },
-
   methods: {
     getConnectionData () {
       const { connection } = this.streamManager.stream
-      return JSON.parse(connection.data)
+      // json格式
+      const jsonData = connection.data
+      const [clientDataJson,serverDataJson] = jsonData.split("%/%")
+      console.log(clientDataJson,serverDataJson,"new vedio")
+      return JSON.parse(clientDataJson)
     },
   },
 }
