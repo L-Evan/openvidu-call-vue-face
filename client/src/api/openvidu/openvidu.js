@@ -8,4 +8,4 @@ const removeToken = (data = {
   token: ""
 } ) => request.post("/api-sessions/remove-user", data)
 
-export  {getToken,removeToken}  
+export default {getToken,removeToken}  

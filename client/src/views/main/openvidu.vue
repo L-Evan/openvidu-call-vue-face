@@ -73,7 +73,7 @@
 
 <script>
 import CommonPage from "@/lib/utils/mixin/CommonPage"
-import { getToken, removeToken } from "@/api/openvidu/openvidu"
+import api from "@/api/openvidu/openvidu"
 import {
   headCheck,
   mouthStatusCheck,
@@ -100,6 +100,7 @@ const SSD_MOBILENETV1 = "ssd_mobilenetv1"
 const TINY_FACE_DETECTOR = "tiny_face_detector"
 // 人脸检测模型参数  getFaceDetectorOptions获取  由页面上设置过来
 // ssd_mobilenetv1 options
+// 最小置信阈值  越高检测越精准
 let minConfidence = 0.5
 
 // tiny_face_detector options
@@ -126,6 +127,13 @@ export default {
       options: {},
       // 检测模式
       selectedFaceDetector: SSD_MOBILENETV1,
+      // 情绪判别
+      emojiCount:{},
+      chectCount:0,
+      checkStartTime:0,
+      closeEysCount:0,
+      openMouthCount:0,
+      // openvidu
       OV: undefined,
       session: undefined,
       mainStreamManager: undefined,
@@ -151,15 +159,31 @@ export default {
     // this.canvas = this.$refs["canvas"];
   }, 
   methods: {
+    computerMood(){
+      const t = this.checkStartTime
+      // perclos
+      const m1 = this.closeEysCount/this.chectCount
+      // 平均闭眼
+      const m2 = t/this.closeEysCount
+      // 打哈切频率
+      const m3 = this.openMouthCount/this.chectCount
+      return m1+0.8*m2+0.5*m3
+    },
+    /**
+     * 初始化加载模型 models
+     */
     async init() {
-      // SSD 移动网络检测模型 // 微型人脸检测器模型
+      // SSD 移动网络检测模型 // 微型人脸检测器模型  检测人脸区域
       await this.getCurrentFaceDetectionNet().loadFromUri("/models")
-      // 脸部固定 68火焰脸
+      // 脸部固定住 68火焰脸
       await nets.faceLandmark68Net.loadFromUri("/models")
-      // 检测表情
+      // 检测表情，可以不经过68
       await loadFaceExpressionModel("/models")
       console.log("初始化完毕")
     },
+    /**
+     * 获取现在的模型
+     */
     getCurrentFaceDetectionNet() {
       //  selectedFaceDetector 人脸检测模型
       if (this.selectedFaceDetector === SSD_MOBILENETV1) {
@@ -169,9 +193,15 @@ export default {
         return nets.tinyFaceDetector
       }
     },
+    /**
+     * 判断人脸区域检测模型加载情况
+     */
     isFaceDetectionModelLoaded() {
       return !!this.getCurrentFaceDetectionNet().params
     },
+    /**
+     *  人脸模型option
+     */
     getFaceDetectorOptions() {
       return this.selectedFaceDetector === SSD_MOBILENETV1
         ? new SsdMobilenetv1Options({ minConfidence })
@@ -188,12 +218,11 @@ export default {
       console.log("---------------检测中------------------")
       const startTime = Date.now()
       // 开始检测
-      // result = await result.withFaceExpressions();
       const result = await detectSingleFace(this.video)
         .withFaceLandmarks()
         .withFaceExpressions()
-      if (result) {
-        console.log("结果:", result)
+      if (result) { 
+        console.log("结果:", result) 
         // 疲劳值
         if (result.landmarks._positions) {
           const face68_ = result.landmarks._positions
@@ -212,11 +241,17 @@ export default {
             faceStr = face
           }
         }
-        console.log(faceStr)
+        console.log("情绪："+faceStr)
+        // 表情次数
+        this.emojiCount[faceStr]++
+        // 检测次数
+        this.checkCount++
+      }else{
+        console.log("检测不到")
       }
       console.log("检测时间: " + (Date.now() - startTime))
       // 定时检测
-      setTimeout(() => this.detectFace(), 0)
+      // setTimeout(() => this.detectFace(), 0)
     },
     joinSession() {
       // --- Connect to the session with a valid user token ---
@@ -326,7 +361,7 @@ export default {
       this.session.publish(this.screenPublisher)
     },
     removeUser() {
-      removeToken({ sessionName: this.mySessionId, token: this.token })
+      api.removeToken({ sessionName: this.mySessionId, token: this.token })
     },
     leaveSession() {
       this.removeUser()
@@ -339,11 +374,14 @@ export default {
       this.OV = undefined
       window.removeEventListener("beforeunload", this.leaveSession)
     },
-
+    startCheckFace(){
+      console.log("start check face")
+      this.checkStartTime = Date.now()
+      this.detectFace()
+    },
     updateMainVideoStreamManager(stream) {
       if (this.mainStreamManager === stream) {
-        console.log("start check face")
-        this.detectFace()
+        this.startCheckFace()
         return
       }
 
@@ -364,7 +402,7 @@ export default {
       // return this.createSession(mySessionId).then((sessionId) =>
       //   this.createToken(sessionId)
       // )
-      return getToken({ sessionName: mySessionId })
+      return api.getToken({ sessionName: mySessionId })
     },
   },
 }

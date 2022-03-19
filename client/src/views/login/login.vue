@@ -1,154 +1,79 @@
 <template>
-  <div id="login">
-    <div class="content">
-      <div class="form sign-in">
-        <h2>欢迎回来</h2>
-        <form autocomplete="off">
-          <label>
-            <span>学工号</span>
-            <input v-model="user.userId" type="text" required />
-          </label>
-          <label>
-            <span>密码</span>
-            <input v-model="user.password" type="password" required />
-          </label>
-          <br />
-          <input class="i1" type="button" @click="login" value="登录" />
-        </form>
-      </div>
-      <div class="sub-cont">
-        <div class="img">
-          <div class="img__text m--up">
-            <h2>还未注册？</h2>
-            <p>立即注册</p>
-          </div>
-          <div class="img__text m--in">
-            <h2>已有帐号？</h2>
-            <p>有帐号就登录吧，好久不见了！</p>
-          </div>
-          <div class="img__btn" @click="changeLable">
-            <span class="m--up">注 册</span>
-            <span class="m--in">登 录</span>
-          </div>
-        </div>
-        <div class="form sign-up">
-          <h2>注册</h2>
-          <form autocomplete="off">
-            <label>
-              <span>学工号</span>
-              <input v-model="user.userId" name="aNum" type="text" required />
-            </label>
-            <label>
-              <span>姓名</span>
-              <input v-model="user.userName" type="text" required />
-            </label>
-            <label>
-              <span>密码</span>
-              <input
-                v-model="user.password"
-                name="aPassWord"
-                type="password"
-                required
-              />
-            </label>
-            <label>
-              <span>专业/职称</span>
-              <input v-model="user.aclass" name="aclass" type="text" />
-            </label>
-            <label>
-              <span>邮箱</span>
-              <input v-model="user.email" name="email" type="text" />
-            </label>
-            <label>
-              <span>联系电话</span>
-              <input
-                name="atel"
-                type="tel"
-                v-model="user.atel"
-                id="telphone"
-                @blur="checkTel"
-                required
-              />
-            </label>
-            
-            <label>
-              <span>所属学院</span>
-              <select v-model="user.afaculty" name="afaculty">
-                <option value="计算机学院">计算机学院</option>
-                <option value="信息学院">信息学院</option>
-                <option value="工业自动化学院">工业自动化学院</option>
-                <option value="材料与环境学院">材料与环境学院</option>
-                <option value="航空学院">航空学院</option>
-                <option value="数理与土木工程学院">数理与土木工程学院</option>
-                <option value="商学院">商学院</option>
-                <option value="经济与金融学院">经济与金融学院</option>
-                <option value="外国语学院">外国语学院</option>
-                <option value="民商法律学院">民商法律学院</option>
-                <option value="设计与艺术学院">设计与艺术学院</option>
-                <option value="布莱恩特学院">布莱恩特学院</option>
-                <option value="中美国际学院">中美国际学院</option>
-                <option value="马克思主义学院">马克思主义学院</option>
-              </select>
-            </label>
-            <br />
-            <div id="msg"  style="color: red">{{msg}}</div>
-            <br />
-            <input :disabled="disabled" id="btnSubmit" @click="register" class="i1" value="注册" />
-          </form>
-        </div>
-      </div>
-    </div>
+  <div>
+    <login
+      @login="login($event)"
+      @register="register($event)"
+      @change="changePassWrod($event)"
+      style="vertical-align: middle; height: 100vh"
+    >
+        <!-- 解决svg无法双向绑定问题 -->
+      <svg viewBox="0 14 320 300">
+        <defs>
+          <linearGradient
+            inkscape:collect="always"
+            id="linearGradient"
+            x1="13"
+            y1="193.49992"
+            x2="307"
+            y2="193.49992"
+            gradientUnits="userSpaceOnUse"
+          >
+            <stop style="stop-color: #ff00ff" offset="0" id="stop876"></stop>
+            <stop style="stop-color: #ff0000" offset="1" id="stop878"></stop>
+          </linearGradient>
+        </defs>
+        <path
+          ref="path"
+          d="m 40,120.00016 239.99984,-3.2e-4 c 0,0 24.99263,0.79932 25.00016,35.00016 0.008,34.20084 -25.00016,35 -25.00016,35 h -239.99984 c 0,-0.0205 -25,4.01348 -25,38.5 0,34.48652 25,38.5 25,38.5 h 215 c 0,0 20,-0.99604 20,-25 0,-24.00396 -20,-25 -20,-25 h -190 c 0,0 -20,1.71033 -20,25 0,24.00396 20,25 20,25 h 168.57143"
+          style="stroke-dashoffset: 0px; stroke-dasharray: 240, 1386"
+        ></path>
+      </svg>
+    </login>
   </div>
 </template>
-<script> 
+<script>
 import CommonPage from "@/lib/utils/mixin/CommonPage"
+import login from "@/components/login/login"
+
 import Api from "@/api/user_info"
+
 export default {
+  components: { login },
   data() {
     return {
-      
-      msg:"",
-      disabled:true,
-      user: {
-        userId: "13430050201",
-        userName:"",
-        password: 12345678,
-        aclass: "",
-        atel: "",
-        email:"",
-        afaculty: "",
-      },
+      // 错误信息
+      msg: "",
+      disabled: true
     }
   },
   created() {},
   methods: {
-    async register() {
+    async changePassWrod(V){console.log("改密码",V)},
+    async register(data) {
       console.log("注册：", this.user)
-      await Api.register(this.user)
-
+      await Api.register(data)
       this.$message({
         message: "恭喜你，注册成功！",
         type: "success",
       })
       this.changeLable()
     },
-    async login() {
-      const res = await Api.login(this.user)
+    async login(data) {
+      const res = await Api.login(data)
       console.log("拿到token", res)
       this.$message({
         message: "恭喜你，登录成功！",
         type: "success",
       })
-
       this.goPage("kb")
     },
     checkTel() {
       var mytel = this.user.atel
       var isPhone = /^1[3-9][\d]{9}$/
       var value = mytel.trim()
-      console.log("检查电话",value)
+      console.log("检查电话", value)
       // isMob.test(value) ||
-      if ( isPhone.test(value)) {
+      if (isPhone.test(value)) {
         this.msg = ""
         this.disabled = false //可以点击按钮提交
       } else {
@@ -164,3 +89,17 @@ export default {
   extends: CommonPage,
 }
 </script> 
+
+  <style>
+svg {
+  position: absolute;
+  width: 320px;
+}
+
+path {
+  fill: none;
+  stroke: url(#linearGradient);
+  stroke-width: 4;
+  stroke-dasharray: 240 1386;
+}
+</style>

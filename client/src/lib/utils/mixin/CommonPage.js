@@ -1,9 +1,19 @@
 import allStroy from "@/lib/utils/localStrory" 
 
 export default {
+  // 每次都要运行  考虑迁移
   data() {
     return {
+      VideoType: {
+        CAMERA : "CAMERA",
+        SCREEN : "SCREEN",
+        CUSTOM : "CUSTOM"
+      },
       
+      ScreenType: {
+        WINDOW : "window",
+        SCREEN : "screen"
+      },
       token: allStroy.getToken(),
       time: [
         ["8:00", "8:45"],

@@ -9,6 +9,7 @@ specifiers:
   '@babel/runtime-corejs3': ^7.4.5
   '@popperjs/core': ^2.9.2
   '@vue/babel-preset-app': ^4.5.13
+  animejs: ^3.2.1
   autoprefixer: ^10.2.5
   axios: ^0.21.1
   babel-eslint: ^10.1.0
@@ -57,6 +58,7 @@ specifiers:
   url-loader: ^4.1.1
   vue: ^2.6.14
   vue-amap: ^0.5.10
+  vue-animeta: ^1.0.2
   vue-eslint-parser: ^7.6.0
   vue-loader: ^15.7.0
   vue-router: ^3.5.1
@@ -72,6 +74,7 @@ specifiers:
 dependencies:
   '@popperjs/core': 2.11.2
   '@vue/babel-preset-app': 4.5.15_vue@2.6.14
+  animejs: 3.2.1
   axios: 0.21.4
   babel-eslint: 10.1.0_eslint@7.32.0
   babel-preset-vue-app: 2.0.0
@@ -97,6 +100,7 @@ dependencies:
   svg-url-loader: 7.1.1_webpack@5.70.0
   vue: 2.6.14
   vue-amap: 0.5.10
+  vue-animeta: 1.0.2
   vue-eslint-parser: 7.11.0_eslint@7.32.0
   vue-router: 3.5.3
   vuex: 3.6.2_vue@2.6.14
@@ -1966,6 +1970,10 @@ packages:
   /alphanum-sort/1.0.2:
     resolution: {integrity: sha512-0FcBfdcmaumGPQ0qPn7Q5qTgz/ooXgIyp1rf8ik5bGX8mpE2YHjC0P/eyQvxu1GURYQgq9ozf2mteQ5ZD9YiyQ==}
     dev: true
+
+  /animejs/3.2.1:
+    resolution: {integrity: sha512-sWno3ugFryK5nhiDm/2BKeFCpZv7vzerWUcUPyAZLDhMek3+S/p418ldZJbJXo5ZUOpfm2kP2XRO4NJcULMy9A==}
+    dev: false
 
   /ansi-align/3.0.1:
     resolution: {integrity: sha512-IOfwwBF5iczOjp/WeY4YxyjqAFMQoZufdQWDd19SEExbVLNXqvpzSJ/M7Za4/sCPmQ0+GRquoA7bGcINcxew6w==}
@@ -8367,6 +8375,13 @@ packages:
     engines: {core-js: ^2.5.0, node: '>= 4.0.0', npm: '>= 3.0.0'}
     dependencies:
       uppercamelcase: 1.1.0
+    dev: false
+
+  /vue-animeta/1.0.2:
+    resolution: {integrity: sha512-7rSwLPg6L1GFECvLuZsKrCAGvhjxfie5D8I2kUBkWcV7J38zvVCKmyXIuHl/C9Qm3S7dNhC5C+L4iCPAmy84VA==}
+    dependencies:
+      animejs: 3.2.1
+      vue: 2.6.14
     dev: false
 
   /vue-eslint-parser/7.11.0_eslint@7.32.0:

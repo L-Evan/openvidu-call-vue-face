@@ -1,5 +1,5 @@
 <template>
-	<video autoplay/>
+  <video ref="video" autoplay />
 </template>
 
 <script>
@@ -9,9 +9,10 @@ export default {
   props: {
     streamManager: Object,
   },
-  mounted () {
+  mounted() {
+    console.log("OvVideo->", this.streamManager)
     //  事件通过el获取 video  然后更新视频流，监控每次streamManager更改
-    this.streamManager.addVideoElement(this.$el)
+    this.streamManager?.addVideoElement(this.$refs["video"])
   },
 }
 </script>

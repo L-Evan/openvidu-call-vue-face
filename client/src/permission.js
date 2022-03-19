@@ -18,7 +18,6 @@ router.beforeEach(async(to, from, next) => {
   NProgress.start() 
   // set page title
   document.title = getPageTitle(to.meta.title)
-  
   // determine whether the user has logged in
   const hasToken = allStroy.getToken()// getToken()
  

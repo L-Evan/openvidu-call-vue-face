@@ -1,41 +1,44 @@
 // import '../public/index.css'
 
-//babel-polyfill 
+//babel-polyfill
 import "core-js/stable"
 import "regenerator-runtime/runtime"
 //babel
-import "core-js" 
+import "core-js"
 
 //router配置
 import router from "@/router"
-// const fetch2 = require("node-fetch") 
+// const fetch2 = require("node-fetch")
 import Vue from "vue"
 import store from "./store/index"
 //入口
-import App from "@/App"  // 名字要对应
+import App from "@/App" // 名字要对应
 //tokenD:\GIT\Gihub\Science\client\src\lib\utils\localStrory.js
-// import allStroy from "@/lib/utils/localStrory"  
+// import allStroy from "@/lib/utils/localStrory"
 // ui
 import ElementUI from "element-ui"
 // ui样式
 import "element-ui/lib/theme-chalk/index.css"
+//折叠
+// fade/zoom 等
+import "element-ui/lib/theme-chalk/base.css"
 // 导航的内容
 import "@/icons" // icon
 import "@/styles/index.scss" // global css
 //??
-import "normalize.css/normalize.css" // A modern alternative to CSS resets 
+import "normalize.css/normalize.css" // A modern alternative to CSS resets
 
 import "./permission.js"
 // bootstrap
 import "jquery"
-import "@popperjs/core"  
+import "@popperjs/core"
 import "bootstrap/dist/js/bootstrap.min.js"
 // 高德
 import VueAMap from "vue-amap"
 Vue.use(VueAMap)
 VueAMap.initAMapApiLoader({
   key: "af70339539f4dac1352b697777d09037",
-  plugin: ["AMap.PlaceSearch", "AMap.Geolocation","AMap.AdvancedInfoWindow"],
+  plugin: ["AMap.PlaceSearch", "AMap.Geolocation", "AMap.AdvancedInfoWindow"],
   v: "1.4.15",
   uiVersion: "1.1"
 })
@@ -45,11 +48,11 @@ VueAMap.initAMapApiLoader({
 //   console.log(from, to)
 //   const token = allStroy.getToken()
 //   console.log("token",token)
-  
+
 //   if(to.path==="/error/404"){
 //     next()
-//     return 
-//   } 
+//     return
+//   }
 
 //   if (token) {
 //     //  转主页
@@ -61,7 +64,7 @@ VueAMap.initAMapApiLoader({
 //   } else if(to.name!=="login") {
 //     // 去登录
 //     next({ name: "login" })
-//     return 
+//     return
 //   }
 //   // 去登录
 //   next()
@@ -72,11 +75,9 @@ Vue.use(ElementUI)
 new Vue({
   router: router,
   store,
-  render(h) {
+  render (h) {
     return h(App)
   }
 }).$mount("#app")
 
 export default router
-
-

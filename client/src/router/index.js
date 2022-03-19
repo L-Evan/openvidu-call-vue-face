@@ -8,12 +8,18 @@ import Layout from "@/layout"
 // 首页
 export const constantRoutes = [
   {
-    name: "Dashboard", path: "/",
+    name: "Dashboard",
+    path: "/",
     component: Layout,
     redirect: "/index",
     meta: { title: "首页" },
     hidden: true,
     children: []
+  },
+  {
+    name: "openvidu",
+    path: "/openvidu",
+    component: resolve => require(["@/views/main/test.vue"], resolve)
   },
   { path: "*", redirect: "/error/404", hidden: true }
 ]
@@ -24,11 +30,7 @@ const mainChildren = []
 const accountChildren = []
 //值班
 const dutyChildren = []
-const requireContext = require.context(
-  "../views",
-  true,
-  /\.vue$/
-)
+const requireContext = require.context("../views", true, /\.vue$/)
 // 所有路径
 const keys = requireContext.keys()
 keys.forEach(key => {
@@ -42,18 +44,18 @@ keys.forEach(key => {
     name,
     path,
     hidden: hidden ? true : false,
-    component: (resolve) => require([`@/views${path}.vue`], resolve),
+    component: resolve => require([`@/views${path}.vue`], resolve),
     meta: {
       icon: icon ?? "",
       role: [],
-      title: title ?? "页面",
+      title: title ?? "页面"
     },
     roles: component.default.ROUTER_ROLES ?? []
   }
   const layrouter = {
     path,
     component: Layout,
-    children: [router],
+    children: [router]
   }
 
   // 首页
@@ -62,7 +64,7 @@ keys.forEach(key => {
   }
   // 主要功能页
   else if (/^\/main\//.test(path)) {
-    // 值班 
+    // 值班
     if (/^\/main\/duty\//.test(path)) {
       dutyChildren.push(router)
     } else {
@@ -83,7 +85,6 @@ keys.forEach(key => {
   }
 })
 
-
 constantRoutes.push(...mainChildren)
 //账户
 const userLayRouter = {
@@ -95,7 +96,7 @@ const userLayRouter = {
   meta: {
     icon: "el-icon-user",
     role: ["admin"],
-    title: "用户管理",
+    title: "用户管理"
   }
 }
 // 维修
@@ -108,32 +109,31 @@ const dutyLayRouter = {
   meta: {
     icon: "el-icon-alarm-clock",
     role: ["admin"],
-    title: "值班管理",
+    title: "值班管理"
   }
 }
-
 
 // constantRoutes.push(userLayRouter)
 
 console.log(constantRoutes, "加入路由")
 
-//路由表  
-const createRouter = () => new Router({
-  // mode: 'history', // require service support
-  scrollBehavior: () => ({ y: 0 }),
-  routes: constantRoutes
-})
+//路由表
+const createRouter = () =>
+  new Router({
+    // mode: 'history', // require service support
+    scrollBehavior: () => ({ y: 0 }),
+    routes: constantRoutes
+  })
 
 //路由实体
 const router = createRouter()
 
 export default router
-export function resetRouter() {
+export function resetRouter () {
   const newRouter = createRouter()
   constantRoutes.matcher = newRouter.matcher // reset router
 }
 
 //异步挂载的路由
-//动态需要根据权限加载的路由表 
+//动态需要根据权限加载的路由表
 export const asyncRouterMap = [userLayRouter, dutyLayRouter]
-

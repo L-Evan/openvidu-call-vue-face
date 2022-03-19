@@ -26,11 +26,11 @@ module.exports = WebpackMerge.merge(webpackConfig,{
       publicPath: "/"
     },
     https:true,
-    host:"192.168.56.1", 
+    host: "127.0.0.1",  // "192.168.137.1",
     // false 才可以host
     // useLocalIp: false,
     // disableHostCheck: true,
-    open: "https://192.168.56.1:6060",
+    // open: "https://localhost:6060",
     // overlay: true, // 全屏显示报错 
     port:6060,
     hot:true, // 是否热更新

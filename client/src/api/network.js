@@ -7,7 +7,7 @@ import { asyncErrorHandler } from "./errorHandler"
 // 公共路由(网络请求地址)
 // axios.defaults.headers.post['Access-Control-Allow-Origin'] = '*';
 // http://localhost:8082
-axios.defaults.baseURL = "https://192.168.56.1:8080/"
+axios.defaults.baseURL = "https://levani.cn:8080/" // "https://192.168.137.1:8080/"
 // 请求响应超时时间
 axios.defaults.timeout = 5000
 //post请求设置
