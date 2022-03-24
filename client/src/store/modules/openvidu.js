@@ -1,4 +1,6 @@
-// 创建一个新的 store 实例
+
+
+import { openViduLayoutService } from "@/lib/utils/openvidu/layout"// 创建一个新的 store 实例
 const getDefaultState = () => {
   return {
     ovSettings:null,
@@ -8,7 +10,7 @@ const getDefaultState = () => {
     remoteUserNameList:[],
     screenShareState:false,
     webcamVideoActive: false ,
-    messagesUnread:0,messageList:[],toggleChat:true,
+    messagesUnread:0,messageList:[],toggleChat:false,
     
   }
 }
@@ -30,12 +32,14 @@ const mutations = {
   },
   SET_LocalUsers: (state, localUsers) => {
     state.localUsers = localUsers
+    openViduLayoutService.update()
   },
   SET_RemoteUserNameList: (state, remoteUserNameList) => {
     state.remoteUserNameList = remoteUserNameList
   },
   SET_RemoteUsers: (state, remoteUsers) => {
     state.remoteUsers = remoteUsers
+    openViduLayoutService.update()
   },
   SET_ScreenShareState: (state, screenShareState) => {
     state.screenShareState = screenShareState

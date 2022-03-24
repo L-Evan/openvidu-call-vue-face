@@ -1,6 +1,6 @@
 <template>
   <el-card
-    v-if="showConfigCard"
+    v-show="showConfigCard"
     style="max-width: 1150px"
     class="modal-content cardContainer"
   >
@@ -54,6 +54,7 @@
           </div>
           <div class="avatarButton ng-star-inserted">
             <el-button
+            v-if="hasVideoDevices"
               @click="captureAvatar"
               type="primary"
               icon="el-icon-camera"
@@ -76,7 +77,7 @@
             <div class="">
               <el-radio
                 v-model="form.avatar"
-                :label="capturedAvatar"
+                :label="AvatarType.CAPTURED"
                 id="avatarContainer"
               >
                 <div id="imgText">
@@ -84,7 +85,7 @@
                 </div>
                 <el-avatar :src="capturedAvatar" id="avatarImg" />
               </el-radio>
-              <el-radio v-model="form.avatar" label="''" id="avatarContainer">
+              <el-radio v-model="form.avatar" :label="AvatarType.DEFAULT" id="avatarContainer">
                 <img
                   id="avatarImg"
                   src="@/assets/resources/images/openvidu_globe_bg_transp_cropped.png"
@@ -97,11 +98,12 @@
               ><el-button icon="el-icon-user-solid" circle></el-button
             ></span>
             <el-input
+             @keyup.enter="joinSession"
               @change="onNicknameUpdate"
               v-model="form.nickName"
             ></el-input>
           </el-form-item>
-          <el-form-item label="选择音频">
+          <el-form-item label="选择音频" v-if=" hasAudioDevices">
             <!-- el-icon-turn-off-microphone -->
             <span
               ><el-button
@@ -128,7 +130,7 @@
               ></el-option>
             </el-select>
           </el-form-item>
-          <el-form-item label="网络摄像">
+          <el-form-item v-if="hasVideoDevices" label="网络摄像">
             <span
               ><el-button
                 :style="{ color: switchVideo ? 'inherit' : 'red' }"
@@ -181,11 +183,12 @@
 </template>
 
 <script>
+import { AvatarType } from "@/lib/utils/openvidu/openviduType"
 import { tokenService } from "@/lib/utils/openvidu/openviduToken"
 import { devicesService } from "@/lib/utils/openvidu/device"
 import { localUsersService } from "@/lib/utils/openvidu/openviduMainUser"
 import { avatarService } from "@/lib/utils/openvidu/avatar"
-import { StorageService } from "@/lib/utils/openvidu/newStory"
+import { storageSrv } from "@/lib/utils/openvidu/newStory"
 import { OvSettingsModel } from "@/lib/utils/openvidu/openviduSetting"
 import { OpenViduErrorName } from "openvidu-browser/lib/OpenViduInternal/Enums/OpenViduError"
 import CommonPage from "@/lib/utils/mixin/CommonPage"
@@ -205,20 +208,19 @@ export default {
   extends: CommonPage,
 
   data() {
-    return {
+    return {AvatarType,
       // 所有用户
       avatarService: null,
-      // 是否显示卡片  占时没用
-      showConfigCard: true,
+      // 是否显示卡片  等待权限获取成功再显示
+      showConfigCard: false,
       // 头像base64
       capturedAvatar: "",
-      storageSrv: new StorageService(),
       // 是否有
       hasVideoDevices: false,
       hasAudioDevices: false,
-      //无设备自动直接进入 属于配置属性
+      // 无设备自动直接进入 属于配置属性
       isAutoPublish: false,
-      // 是否允许
+      // 是否使用设备
       isAudioActive: false,
       isVideoActive: true,
       // 共享屏幕
@@ -231,12 +233,11 @@ export default {
         nickName: "",
         micSelectedDevice: "",
         camSelectedDevice: "",
+        // type
         avatar: "",
       },
       rules: {
-        nickName: [
-          { required: true, message: "请输入昵称", trigger: "blur" }
-        ],
+        nickName: [{ required: true, message: "请输入昵称", trigger: "blur" }],
       },
     }
   },
@@ -263,7 +264,6 @@ export default {
     this.setSessionName()
     await devicesService.initDevices()
     console.log("第一次设备初始化完毕", devicesService)
-    console.log("mounted")
     this.start()
   },
   methods: {
@@ -274,11 +274,12 @@ export default {
       this.setDevicesInfo(devicesService)
       if (this.hasAudioDevices || this.hasVideoDevices) {
         await this.initwebcamPublisher()
+        console.log("第二次设备初始化完毕", devicesService)
       } else {
-        console.log("没有设备，不显示卡片")
-        // 暂时理解是用户没有设备 配置名字头像作为观察者
+        console.log("没有设备")
+        // 用户没有设备  作为观察者 Publisher is null
+        // emitPublisher通知上层 多了发布者
         // Emit publisher to webcomponent and angular-library
-        // 给会议室
         this.emitPublisher(null)
         this.showConfigCard = true
       }
@@ -306,9 +307,7 @@ export default {
     },
     onNicknameUpdate() {
       localUsersService.updateUsersNickname(this.form.nickName)
-      this.storageSrv.set(Storage.USER_NICKNAME, this.form.nickName)
-      // 发送给视频会议 暂时不管
-      // openViduWebRTCService.sendNicknameSignal()
+      storageSrv.set(Storage.USER_NICKNAME, this.form.nickName)
     },
     // 音乐联通
     toggleMic() {
@@ -330,7 +329,7 @@ export default {
       // 2个代表关闭视频
       if (localUsersService.areBothConnected()) {
         localUsersService.disableWebcamUser()
-        // 声音移植 处理的是webrt的 占时不看
+        // 麦克风处理，webrt的
         openViduWebRTCService.publishScreenAudio(this.isAudioActive)
         // !this.subscribeToVolumeChange(<Publisher>this.localUsers[0].getStreamManager());
         // 只有屏幕
@@ -417,7 +416,7 @@ export default {
       // 校验 this.nicknameFormControl.valid
       this.$refs["form"].validate((valid) => {
         if (valid) {
-          avatarService.setFinalAvatar(this.avatarSelected)
+          avatarService.setFinalAvatar(this.form.avatar)
           this.$emit("join")
           return true
         } else {
@@ -529,7 +528,7 @@ export default {
       })
     },
     handlePublisherError(publisher) {
-      // 拒绝了
+      // 拒绝获取权限
       publisher.once("accessDenied", (e) => {
         let message
         if (e.name === OpenViduErrorName.DEVICE_ALREADY_IN_USE) {
@@ -557,7 +556,7 @@ export default {
         console.log(e.message)
       })
     },
-    // 不太理解，暂时理解是传递给下个组件？
+    // 不太理解，暂时理解是传递给下个组件
     emitPublisher(publisher) {
       this.$emit("publisherCreated", publisher)
     },
@@ -568,15 +567,15 @@ export default {
       }
     },
     // 初始化屏幕
-    setDevicesInfo(devices) {
-      this.hasVideoDevices = devices.hasVideoDeviceAvailable()
-      this.hasAudioDevices = devices.hasAudioDeviceAvailable()
-      this.microphones = devices.getMicrophones()
-      this.cameras = devices.getCameras()
-      this.camSelected = devices.getCamSelected() //
-      this.micSelected = devices.getMicSelected()
+    setDevicesInfo() {
+      this.hasVideoDevices = devicesService.hasVideoDeviceAvailable()
+      this.hasAudioDevices = devicesService.hasAudioDeviceAvailable()
+      this.microphones = devicesService.getMicrophones()
+      this.cameras = devicesService.getCameras()
+      this.camSelected = devicesService.getCamSelected() //
+      this.micSelected = devicesService.getMicSelected()
     },
-    // 暂时固定session Name 
+    // 暂时固定session Name
     setSessionName() {
       this.mySessionId = this.$route.params.sessionName || "aa"
       tokenService.setSessionId(this.mySessionId)
@@ -585,6 +584,9 @@ export default {
       this.$emit("leaveSession")
       this.showConfigCard = false
     },
+  },
+  destroyed() {
+    devicesService.clear()
   },
 }
 </script>

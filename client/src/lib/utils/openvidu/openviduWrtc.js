@@ -1,6 +1,7 @@
 import { OpenVidu } from "openvidu-browser"
 import { localUsersService as localUsersSrv } from "./openviduMainUser"
 import { environment } from "./openviduType"
+import { ScreenType } from "./openviduType"
 class OpenViduWebrtcService {
   constructor () {
     this.localUsersSrv = localUsersSrv
@@ -12,8 +13,8 @@ class OpenViduWebrtcService {
     // Publisher 流第一次开始播放
     publisher.once("streamPlaying", () => {
       // 还不太理解  媒体播放后删除class？比如吧黑屏关掉？
-      console.log("不理解 streamPlaying")
-      // publisher.videos[0].video.parentElement.classList.remove("custom-class")
+      console.log("streamPlaying remove custom-class?")
+      publisher.videos[0].video.parentElement.classList.remove("custom-class")
     })
     return publisher
   }
@@ -109,9 +110,9 @@ class OpenViduWebrtcService {
     this.localUsersSrv.updateUsersStatus()
   }
   // TODO: replace function by sendSignal
-  // 这里是处理视频会议的占时不搞
+  // rtc发送 修改姓名 也就是对应的connect
   sendNicknameSignal (connection) {
-    // 是否需要改名
+    // 是否需要改名,新连接还不知道本地改名字
     if (this.needSendNicknameSignal()) {
       const signalOptions = {
         data: JSON.stringify({
@@ -128,15 +129,13 @@ class OpenViduWebrtcService {
     }
   }
   // 新连接才可以使用
-  getClientConnectionJson(){
+  getClientConnectionJson () {
+    console.log("此时来的名字",this.webcamSession.connection.data)
     return this.webcamSession.connection.data?.split("%/%")[0]
   }
 
   needSendNicknameSignal () {
-    console.log("接受连接数据",this.webcamSession.connection.data)
-    
-    const oldNickname = JSON.parse(this.getClientConnectionJson())
-      .clientData
+    const oldNickname = JSON.parse(this.getClientConnectionJson()).clientData
     return oldNickname !== this.localUsersSrv.getWebcamUserName()
   }
   initialize () {
@@ -187,9 +186,13 @@ class OpenViduWebrtcService {
   }
   async connectWebcamSession (token) {
     if (token) {
-      console.log("Connecting webcam session",token)
+      console.log("Connecting webcam session", token)
       const webcamUsername = this.localUsersSrv.getWebcamUserName()
       const webcamAvatar = this.localUsersSrv.getAvatar()
+      // console.log("带着数据连接",{
+      //   clientData: webcamUsername,
+      //   avatar: webcamAvatar
+      // })
       await this.webcamSession.connect(token, {
         clientData: webcamUsername,
         avatar: webcamAvatar
@@ -278,6 +281,40 @@ class OpenViduWebrtcService {
     this.stopAudioTracks(
       this.localUsersSrv.getScreenPublisher()?.stream?.getMediaStream()
     )
+  }
+  // 切换共享屏幕
+  async replaceScreenTrack () {
+    const videoSource = ScreenType.SCREEN
+    const hasAudio = !this.localUsersSrv.isWebCamEnabled()
+    // 新的
+    const properties = this.createPublisherProperties(
+      videoSource,
+      undefined,
+      true,
+      hasAudio,
+      false
+    )
+    // 去掉之前的
+    this.stopScreenTracks()
+    this.screenMediaStream = await this.OVScreen.getUserMedia(properties)
+    // 屏幕更新到实际对象 openvidu提供流跟换
+    await this.localUsersSrv
+      .getScreenPublisher()
+      .replaceTrack(this.screenMediaStream.getVideoTracks()[0])
+  }
+  stopScreenTracks () {
+    if (this.screenMediaStream) {
+      this.stopAudioTracks(this.screenMediaStream)
+      this.stopVideoTracks(this.screenMediaStream)
+    }
+  }
+  // 功能区时
+  isWebcamSessionConnected () {
+    return !!this.webcamSession.capabilities
+  }
+  // 证明已经连接过
+  isScreenSessionConnected () {
+    return !!this.screenSession.capabilities
   }
 }
 export const openViduWebRTCService = new OpenViduWebrtcService()

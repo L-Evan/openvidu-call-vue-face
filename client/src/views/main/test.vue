@@ -2,17 +2,20 @@
   <!-- @externalConfig="externalConfig"  -->
   <!-- @ovSettings="ovSettings" -->
 
-  <el-container style="height: 100%">
+  <el-container style="height: 100%" id="videoRoomNavBar">
     <el-header v-show="joinedVidioRoom"
       ><openvidu-controler
-        @toggleChat="
-          () => {
-            chatService.toggleChat()
-          } "
+        @camButtonClicked="toggleCam"
+        @micButtonClicked="toggleMic"
+        @screenShareClicked="toggleScreenShare"
+        @layoutButtonClicked="toggleSpeakerLayout"
+        @leaveSessionButtonClicked="leaveSession"
         :ovSettings="ovSettings"
         :hasVideoDevices="hasVideoDevices"
         :hasAudioDevices="hasAudioDevices"
         :isAutoLayout="isAutoLayout"
+			:isWebcamAudioEnabled="toolbarMicIconEnabled()"
+        
         :isConnectionLost="isConnectionLost"
       ></openvidu-controler
     ></el-header>
@@ -20,54 +23,59 @@
       <el-container>
         <el-main>
           <div style="width: 90%; margin: 55px auto">
-            <card
-              :ovSettings="ovSettings"
+            <openvidu-config
               v-if="showConfigRoomCard"
+              :ovSettings="ovSettings"
               @join="onConfigRoomJoin"
-              @leaveSession="leaveSession()"
+              @leaveSession="leaveSession"
               @publisherCreated="emitPublisher($event)"
               ref="openvidu"
-            ></card>
+            ></openvidu-config>
             <div v-if="joinedVidioRoom" class="sidenav-main">
               <div
                 id="layout"
-                class="bounds"
                 :style="{
-                  top: '0px',
-                  bottom: '0px',
+                  top: '66px',
+                  bottom: '25px',
                 }"
+                class="bounds"
               >
-              <!--ovSettings hasToolbar hasFooter -->
-                <div class="OT_root OT_publisher custom-class"
+                <div
                   id="localUser"
-                  :key="index"
-                  v-for="(localUser, index) in localUsers"
-                  :class="['OT_root','OT_publisher','custom-class',!localUser.streamManager?.stream?.videoActive?'OV_small':''    ]"
-                   
+                  v-for="(localUser, localindex) in localUsers"
+                  :key="localindex"
+                  :class="[
+                    'OT_root',
+                    'OT_publisher',
+                    'custom-class',
+                    isSmallVideo(localUser) ? 'OV_small' : '',
+                  ]"
                 >
-                  <!-- Only webcam video will be shown if webcamera is available -->
-                  <!-- <stream-component
-                    [user]="localUser"
-                    [videoSizeBig]="localUser.videoSizeBig"
-                    (nicknameClicked)="onNicknameUpdate($event)"
-                    (replaceScreenTrackClicked)="onReplaceScreenTrack($event)"
-                    (toggleVideoSizeClicked)="onToggleVideoSize($event)"
-                  ></stream-component> -->
-                  <user-video :stream-manager="localUser" />
+                  <!-- ,!(localUser.streamManager?.stream?.videoActive)?'OV_small':'' -->
+                  <vedio-stream
+                    @replaceScreenTrackClicked="onReplaceScreenTrack($event)"
+                    :videoSizeBig="localUser.videoSizeBig"
+                    @toggleVideoSizeClicked="onToggleVideoSize($event)"
+                    :user="localUser"
+                  />
                 </div>
 
                 <div
-                  :key="index"
-                  v-for="(user, index) in remoteUsers"
-                  :class="['OT_root','OT_publisher','custom-class',!user.streamManager?.stream?.videoActive?'OV_small':''    ]"
-                  id="remoteUsers" 
+                  v-for="(user, remoteindex) in remoteUsers"
+                  :key="remoteindex + 100"
+                  :class="[
+                    'OT_root',
+                    'OT_publisher',
+                    'custom-class',
+                    isSmallVideo(user) ? 'OV_small' : '',
+                  ]"
+                  id="remoteUsers"
                 >
-                  <!-- <stream-component
-                    [user]="user"
-                    [videoSizeBig]="user.videoSizeBig"
-                    (toggleVideoSizeClicked)="onToggleVideoSize($event)"
-                  ></stream-component> -->
-                  <user-video :stream-manager="user" />
+                  <vedio-stream
+                    :videoSizeBig="user.videoSizeBig"
+                    @toggleVideoSizeClicked="onToggleVideoSize($event)"
+                    :user="user"
+                  />
                 </div>
               </div>
             </div>
@@ -85,21 +93,28 @@
 </template>
 
 <script>
+import vedioStream from "@/components/openvidu/openviduStream"
+// import UserVideo from "@/components/openvidu/UserVideo"
 
-import UserVideo from "@/components/openvidu/UserVideo"
+import { openViduLayoutService } from "@/lib/utils/openvidu/layout"
 import { ExternalConfigModel } from "@/lib/utils/openvidu/openviduExternalConfig"
+import { storageSrv } from "@/lib/utils/openvidu/newStory"
 import { chatService } from "@/lib/utils/openvidu/openviduWechat"
 import openviduControler from "@/components/openvidu/openviduControler"
 import { mapGetters } from "vuex"
 import { openViduWebRTCService } from "@/lib/utils/openvidu/openviduWrtc"
-import { VideoType } from "@/lib/utils/openvidu/openviduType"
+import {
+  VideoType,
+  LayoutType,
+  ScreenType,
+} from "@/lib/utils/openvidu/openviduType"
 import { localUsersService } from "@/lib/utils/openvidu/openviduMainUser"
 import { utils as utilsSrv } from "@/lib/utils/openvidu/openviduUtils"
 import { tokenService } from "@/lib/utils/openvidu/openviduToken"
 import { OvSettingsModel } from "@/lib/utils/openvidu/openviduSetting"
 import { remoteUsersService } from "@/lib/utils/openvidu/openviduRemoteUser"
 import { devicesService as oVDevicesService } from "@/lib/utils/openvidu/device"
-import card from "@/components/openvidu/openviduConfig"
+import openviduConfig from "@/components/openvidu/openviduConfig"
 import chat from "@/components/openvidu/openviduChat"
 import CommonPage from "@/lib/utils/mixin/CommonPage"
 export default {
@@ -109,9 +124,10 @@ export default {
   name: "meettest",
   ROUTER_ICON: "el-icon-date",
   components: {
-    card,
+    openviduConfig,
     chat,
-    openviduControler,UserVideo
+    openviduControler,
+    vedioStream,
   },
 
   computed: {
@@ -127,8 +143,11 @@ export default {
   },
   data() {
     return {
-      OV: undefined,
+      oVLayout: openViduLayoutService,
       chatService,
+      // 控制大小调整
+      removeEmit: [],
+      OV: undefined,
       //------------------
       ovSettings: null, //OvSettingsModel,
       compact: false,
@@ -137,9 +156,9 @@ export default {
       session: null, //Session,
       sessionScreen: null, //Session,
       participantsNameList: [],
-      // 链接丢失
+      // 链接状态
       isConnectionLost: false,
-      // 音频开关
+      // 播放音频开关
       isAutoLayout: true,
       hasVideoDevices: true,
       hasAudioDevices: true,
@@ -161,34 +180,62 @@ export default {
   },
   mounted() {
     this.chatSidenav = this.$refs["chatSidenav"]
+
+    // 监听记得卸载
+    this.removeEmit.push({ type: "resize", fun: this.updateLayout })
+    this.removeEmit.push({ type: "beforeunload", fun: this.leaveSession })
+    window.addEventListener("resize", this.updateLayout)
+    window.addEventListener("beforeunload", this.leaveSession)
+  },
+  destroyed() {
+    // Reconnecting session is received in Firefox
+    // To avoid 'Connection lost' message uses session.off()
+    // this.session?.off("reconnecting")
+    remoteUsersService.clear()
+    this.oVLayout.clear()
+    localUsersService.clear()
+    this.session = null
+    this.sessionScreen = null
+    this.removeEmit.forEach((item) => {
+      window.removeEventListener(item.type, item.fun, false)
+    })
   },
   methods: {
+    updateLayout() {
+      this.oVLayout.update()
+    },
+    isSmallVideo(localUser) {
+      return !localUser.streamManager?.stream?.videoActive
+    },
     onConfigRoomJoin() {
-      console.log("join")
+      console.log("onConfigRoomJoin：加入会议")
       this.hasVideoDevices = oVDevicesService.hasVideoDeviceAvailable()
       this.hasAudioDevices = oVDevicesService.hasAudioDeviceAvailable()
       this.showConfigRoomCard = false
       // vuex
       // this.localUsers = localUsersService.OVUsers()
-      this.remoteUsersSubscription = remoteUsersService.remoteUsers()
-      this.remoteUserNameSubscription = remoteUsersService.remoteUserNameList()
+      // this.remoteUsersSubscription = remoteUsersService.remoteUsers()
+      // this.remoteUserNameSubscription = remoteUsersService.remoteUserNameList()
 
       tokenService.initialize(this.ovSettings)
 
       setTimeout(() => {
-        // this.oVLayout.initialize()
+        // 初始化会议布局
+        this.oVLayout.initialize()
+        // 控制聊天框
         // this.checkSizeComponent()
         this.joinToSession()
       }, 50)
     },
     // 加入会议预处理
     async joinToSession() {
-      // 初始化session
+      // 初始化session 会议
       openViduWebRTCService.initSessions()
       this.session = openViduWebRTCService.getWebcamSession()
       // this._session.emit(this.session)
       this.sessionScreen = openViduWebRTCService.getScreenSession()
       // 初始化监听
+      // 新连接
       this.subscribeToConnectionCreatedAndDestroyed()
       this.subscribeToStreamCreated()
       this.subscribeToStreamDestroyed()
@@ -198,8 +245,8 @@ export default {
       this.chatService.setChatComponent(this.chatSidenav)
       // 监听chat事件
       this.chatService.subscribeToChat()
-      // 延时么 获取关闭情况 还不是特别了解
-      this.subscribeToChatComponent()
+      // 延时么 获取关闭情况 还不是特别了解  开关抽屉 需要更新布局
+      // this.subscribeToChatComponent()
       // 监听 重新链接，更新链接情况：如丢失
       this.subscribeToReconnection()
       // 获取链接，并且会求下token
@@ -217,7 +264,7 @@ export default {
       // having token is can
       // if (this.externalConfig.canJoinToSession()) {
     },
-    // 核心：开始连接
+    // 核心：开始连接会议
     async connectToSession() {
       //1.  获取token Initialize tokens from externalConfig or create new ones
       await tokenService.initTokens(this.externalConfig)
@@ -239,7 +286,7 @@ export default {
       }
       // !Deprecated
       // this._joinSession.emit()
-      // this.oVLayout.update()
+      this.oVLayout.update()
     },
     // 链接
     async connectWebcamSession() {
@@ -275,19 +322,9 @@ export default {
         this.$message({
           message:
             "There was an error connecting to the session:" +
-            (error?.error || error?.message)
+            (error?.error || error?.message),
         })
       }
-    },
-    // 更新界面时间？
-    subscribeToChatComponent() {
-      this.chatSubscription = this.chatService.toggleChatObs()
-      // .subscribe(
-      //   (opened) => {
-      //     const timeout = this.externalConfig ? 300 : 0
-      //     this.oVLayout.update(timeout)
-      //   }
-      // )
     },
     // 重新链接状态控制,提醒
     subscribeToReconnection() {
@@ -302,11 +339,11 @@ export default {
       this.session.on("reconnected", () => {
         console.log("Connection lost: Reconnected")
         this.isConnectionLost = false
-        // this.utilsSrv.closeDialog()
+        // utilsSrv.closeDialog()
       })
       this.session.on("sessionDisconnected", (event) => {
         if (event.reason === "networkDisconnect") {
-          // this.utilsSrv.closeDialog()
+          // utilsSrv.closeDialog()
           this.leaveSession()
         }
       })
@@ -314,20 +351,22 @@ export default {
     // 挂载 链接的 session Event
     subscribeToConnectionCreatedAndDestroyed() {
       this.session.on("connectionCreated", (event) => {
+        // 自己连接不处理
         if (
           openViduWebRTCService.isMyOwnConnection(event.connection.connectionId)
         ) {
           return
         }
-
+        console.log("接受新连接", event)
         const nickname = utilsSrv.getNicknameFromConnectionData(
           event.connection.data
         )
-        // 更新到 remoteUsersService，名字代表这个用户
+        // 添加一个用户名
         remoteUsersService.addUserName(event)
-        // 屏幕名字特殊？
+        // 不是共享屏幕
         // Adding participant when connection is created
         if (!nickname?.includes("_" + VideoType.SCREEN)) {
+          // 添加一个用户
           remoteUsersService.add(event, null)
           openViduWebRTCService.sendNicknameSignal(event.connection)
         }
@@ -382,25 +421,243 @@ export default {
         }
       })
     },
+    // 用户修改姓名
     subscribeToNicknameChanged() {
       this.session.on("signal:nicknameChanged", (event) => {
         const connectionId = event.from.connectionId
         if (openViduWebRTCService.isMyOwnConnection(connectionId)) {
           return
         }
+        console.log("用户修改姓名：",event)
         const nickname = utilsSrv.getNicknameFromConnectionData(event.data)
         remoteUsersService.updateNickname(connectionId, nickname)
       })
     },
+    // 放到中间
+    onToggleVideoSize(event) {
+      console.log("改变大小", event)
+      const element = event.element
+      if (event.resetAll) {
+        this.resetAllBigElements()
+      }
+      // 加class 让其变大 oVLayout会识别
+      utilsSrv.toggleBigElementClass(element)
+      // Has been mandatory change the user zoom property here because of
+      // zoom icons and cannot handle publisherStartSpeaking event in other component
+      if (event?.connectionId) {
+        if (openViduWebRTCService.isMyOwnConnection(event.connectionId)) {
+          localUsersService.toggleZoom(event.connectionId)
+        } else {
+          remoteUsersService.toggleUserZoom(event.connectionId)
+        }
+      }
+      // 更新页面 dom改style模式
+      this.oVLayout.update()
+    },
+    // 改变屏幕
+    onReplaceScreenTrack(event) {
+      console.log("改变屏幕", event)
+      openViduWebRTCService.replaceScreenTrack()
+    },
     leaveSession() {
       console.log("Leaving session...")
-      // 断开链接？
+      // 断开链接 session disconnect and stop stream
       openViduWebRTCService.disconnect()
       // 回页面
-      // this.router.navigate([""])
+      // this.$router.push({ path: "/openvidu" })
+      location.reload()
     },
     emitPublisher($event) {
-      console.log("放入", $event)
+      console.log("新public", $event)
+    },
+    // 控制功能区  大部分通过属性更改
+    onNicknameUpdate(nickname) {
+      localUsersService.updateUsersNickname(nickname)
+      storageSrv.set(Storage.USER_NICKNAME, nickname)
+      openViduWebRTCService.sendNicknameSignal()
+    },
+    // 改变麦
+    toggleMic() {
+      if (localUsersService.isWebCamEnabled()) {
+        openViduWebRTCService.publishWebcamAudio(
+          !localUsersService.hasWebcamAudioActive()
+        )
+        return
+      }
+      openViduWebRTCService.publishScreenAudio(
+        !localUsersService.hasScreenAudioActive()
+      )
+    },
+
+    async toggleCam() {
+      const publishVideo = !localUsersService.hasWebcamVideoActive()
+
+      // Disabling webcam
+      if (localUsersService.areBothConnected()) {
+        openViduWebRTCService.publishWebcamVideo(publishVideo)
+        localUsersService.disableWebcamUser()
+        openViduWebRTCService.unpublishWebcamPublisher()
+        return
+      }
+      // Enabling webcam
+      if (localUsersService.isOnlyScreenConnected()) {
+        const hasAudio = localUsersService.hasScreenAudioActive()
+
+        if (!openViduWebRTCService.isWebcamSessionConnected()) {
+          await this.connectWebcamSession()
+        }
+        await openViduWebRTCService.publishWebcamPublisher()
+        openViduWebRTCService.publishScreenAudio(false)
+        openViduWebRTCService.publishWebcamAudio(hasAudio)
+        localUsersService.enableWebcamUser()
+      }
+      // Muting/unmuting webcam
+      openViduWebRTCService.publishWebcamVideo(publishVideo)
+    },
+
+    async toggleScreenShare() {
+      // Disabling screenShare
+      if (localUsersService.areBothConnected()) {
+        this.removeScreen()
+        return
+      }
+
+      // Enabling screenShare
+      if (localUsersService.isOnlyWebcamConnected()) {
+        const screenPublisher = this.initScreenPublisher()
+
+        screenPublisher.once("accessAllowed", async (event) => {
+          // Listen to event fired when native stop button is clicked
+          screenPublisher.stream
+            .getMediaStream()
+            .getVideoTracks()[0]
+            .addEventListener("ended", () => {
+              console.log("Clicked native stop button. Stopping screen sharing")
+              this.toggleScreenShare()
+            })
+          console.log("ACCESS ALOWED screenPublisher")
+          // 保证不删视频（会导致重复的情况）
+          localUsersService.enableScreenUser(screenPublisher)
+          // 判断是否链接
+          if (!openViduWebRTCService.isScreenSessionConnected()) {
+            console.log("视乎链接过期")
+            await this.connectScreenSession()
+          }
+          // 判断是否发布
+          await openViduWebRTCService.publishScreenPublisher()
+          // 判断名字是否改过
+          openViduWebRTCService.sendNicknameSignal()
+          // 看是否删掉视频
+          if (!localUsersService.hasWebcamVideoActive()) {
+            // Disabling webcam
+            localUsersService.disableWebcamUser()
+            openViduWebRTCService.unpublishWebcamPublisher()
+          }
+        })
+
+        screenPublisher.once("accessDenied", (event) => {
+          console.log("ScreenShare: Access Denied")
+        })
+        return
+      }
+
+      // Disabling screnShare and enabling webcam
+      const hasAudio = localUsersService.hasScreenAudioActive()
+      // 重新发布 ，保证其成为主
+      console.log("关闭分享")
+      await openViduWebRTCService.publishWebcamPublisher()
+      openViduWebRTCService.publishScreenAudio(false)
+      openViduWebRTCService.publishWebcamAudio(hasAudio)
+      // 这里不知为啥 放2个。。。 后面又删掉有病
+      // localUsersService.enableWebcamUser()
+      this.removeScreen()
+    },
+
+    toggleSpeakerLayout() {
+      if (!localUsersService.isScreenShareEnabled()) {
+        this.isAutoLayout = !this.isAutoLayout
+
+        console.log(
+          "Automatic Layout ",
+          this.isAutoLayout ? "Disabled" : "Enabled"
+        )
+        if (this.isAutoLayout) {
+          this.subscribeToSpeechDetection()
+          return
+        }
+        console.log("Unsubscribe to speech detection")
+        // 关闭监听声音
+        this.session.off("publisherStartSpeaking")
+        this.resetAllBigElements()
+        this.oVLayout.update()
+        return
+      }
+      console.log("Screen is enabled. Speech detection has been rejected")
+    },
+    // 辅助
+    removeScreen() {
+      localUsersService.disableScreenUser()
+      openViduWebRTCService.unpublishScreenPublisher()
+    },
+    // 重置大小
+    resetAllBigElements() {
+      utilsSrv.removeAllBigElementClass()
+      remoteUsersService.resetUsersZoom()
+      localUsersService.resetUsersZoom()
+    },
+    // 音频播放订阅声音（别人）
+    subscribeToSpeechDetection() {
+      console.log("Subscribe to speech detection", this.session)
+      // Has been mandatory change the user zoom property here because of
+      // zoom icons and cannot handle publisherStartSpeaking event in other component
+      this.session.on("publisherStartSpeaking", (event) => {
+        const someoneIsSharingScreen =
+          remoteUsersService.someoneIsSharingScreen()
+        if (
+          !localUsersService.isScreenShareEnabled() &&
+          !someoneIsSharingScreen
+        ) {
+          const elem = event.connection.stream.streamManager.videos[0].video
+          const element = utilsSrv.getHTMLElementByClassName(
+            elem,
+            LayoutType.ROOT_CLASS
+          )
+          this.resetAllBigElements()
+          remoteUsersService.setUserZoom(event.connection.connectionId, true)
+          this.onToggleVideoSize({ element })
+        }
+      })
+    },
+    // 麦克风状态
+    toolbarMicIconEnabled() {
+      if (localUsersService.isWebCamEnabled()) {
+        return localUsersService.hasWebcamAudioActive()
+      }
+      return localUsersService.hasScreenAudioActive()
+    },
+    initScreenPublisher() {
+      const videoSource = ScreenType.SCREEN
+      const audioSource = this.hasAudioDevices ? undefined : null
+      const willThereBeWebcam =
+        localUsersService.isWebCamEnabled() &&
+        localUsersService.hasWebcamVideoActive()
+      const hasAudio = willThereBeWebcam
+        ? false
+        : this.hasAudioDevices && localUsersService.hasWebcamAudioActive()
+      const properties = openViduWebRTCService.createPublisherProperties(
+        videoSource,
+        audioSource,
+        true,
+        hasAudio,
+        false
+      )
+
+      try {
+        return openViduWebRTCService.initPublisher(undefined, properties)
+      } catch (error) {
+        console.log(error)
+        this.$message(utilsSrv.handlerScreenShareError(error))
+      }
     },
   },
 }

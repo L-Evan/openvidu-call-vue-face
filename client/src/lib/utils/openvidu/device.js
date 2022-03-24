@@ -1,7 +1,7 @@
 import { OpenVidu } from "openvidu-browser"
 import { CameraType, Storage } from "./openviduType"
 import { utils } from "./openviduUtils"
-import { StorageService } from "./newStory"
+import { storageSrv } from "./newStory"
 class DevicesService {
   constructor () {
     this.OV = null
@@ -19,7 +19,7 @@ class DevicesService {
     this.audioDevicesDisabled = false
     this.OV = new OpenVidu()
     this.Uutils = utils
-    this.storageSrv = new StorageService()
+    this.storageSrv = storageSrv
   }
   // 页面更新 判断下需要更新config么
   needUpdateAudioTrack (newAudioSource) {

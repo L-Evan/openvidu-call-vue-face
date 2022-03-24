@@ -39,7 +39,7 @@ class RemoteUsersService {
   }
 
   removeUserByConnectionId (connectionId) {
-    this.log.w("Deleting user: ", connectionId)
+    console.log("Deleting user: ", connectionId)
     const user = this.getRemoteUserByConnectionId(connectionId)
     const index = this.users.indexOf(user, 0)
     if (index > -1) {

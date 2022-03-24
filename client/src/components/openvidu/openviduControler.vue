@@ -17,7 +17,7 @@
         <el-button-group>
           <el-button
             :style="{ color: isWebcamAudioEnabled ? 'inherit' : 'red' }"
-            @click="$emit('toggleMicrophone')"
+            @click="$emit('micButtonClicked')"
             :disabled="isConnectionLost"
             :icon="
               isWebcamAudioEnabled
@@ -32,10 +32,10 @@
 
           <!-- Camera button -->
           <el-button
-            :style="{ color: isWebcamVideoEnabled ? 'inherit' : 'red' }"
+            :style="{ color: webcamVideoActive ? 'inherit' : 'red' }"
             id="navCameraButton"
             icon="el-icon-video-camera-solid"
-            @click="$emit('toggleCamera')"
+            @click="$emit('camButtonClicked')"
             :disabled="isConnectionLost"
             v-if="!ovSettings || (hasVideoDevices && ovSettings)"
           >
@@ -45,8 +45,8 @@
 
           <!-- Screenshare button -->
           <el-button
-            :style="{ color: isScreenShareEnabled ? 'inherit' : 'red' }"
-            @click="$emit('toggleScreenShare')"
+            :style="{ color: screenShareState ? 'inherit' : 'red' }"
+            @click="$emit('screenShareClicked')"
             icon="el-icon-s-platform"
             :disabled="isConnectionLost"
             v-if="ovSettings | hasScreenSharing"
@@ -55,8 +55,8 @@
 
           <!-- Fullscreen button -->
           <el-button
-            icon="el-icon-zoom-in"
-            @click="$emit('toggleFullscreen')"
+            :icon="fullscreenIcon"
+            @click="toggleFullscreen"
             :disabled="isConnectionLost"
             v-if="ovSettings"
           >
@@ -66,7 +66,7 @@
           <el-button
             :style="{ color: isAutoLayout ? 'inherit' : 'red' }"
             icon="el-icon-phone-outline"
-            @click="$emit('toggleSpeakerLayout')"
+            @click="$emit('layoutButtonClicked')"
             :disabled="isConnectionLost"
             v-if="ovSettings"
           >
@@ -76,7 +76,7 @@
           <el-button
             icon="el-icon-remove"
             style="color: red"
-            @click="$emit('leaveSession')"
+            @click="$emit('leaveSessionButtonClicked')"
             v-if="ovSettings"
           >
           </el-button>
@@ -84,9 +84,10 @@
       </div>
     </el-col>
     <el-col :span="4">
-      <el-button style="position: absolute;right:0;"
+      <el-button
+        style="position: absolute; right: 0"
         icon="el-icon-chat-line-square"
-        @click="$emit('toggleChat')"
+        @click="toggleChat"
         :disabled="isConnectionLost"
         v-if="ovSettings"
       >
@@ -99,6 +100,8 @@
 <script>
 import { mapGetters } from "vuex"
 import { localUsersService } from "@/lib/utils/openvidu/openviduMainUser"
+import { utils as utilsSrv } from "@/lib/utils/openvidu/openviduUtils"
+import { VideoFullscreenIcon } from "@/lib/utils/openvidu/openviduType"
 import { chatService } from "@/lib/utils/openvidu/openviduWechat"
 import { tokenService } from "@/lib/utils/openvidu/openviduToken"
 import { OvSettingsModel } from "@/lib/utils/openvidu/openviduSetting"
@@ -106,14 +109,13 @@ export default {
   data() {
     return {
       // 配置项
-      hasScreenSharing:true,
-      
-
+      hasScreenSharing: true,
+      fullscreenIcon: VideoFullscreenIcon.BIG,
       tokenService,
       chatService,
-      localUsersService,
-      isWebcamVideoEnabled:false,
-      isScreenShareEnabled:false,
+      localUsersService
+      // isWebcamVideoEnabled: false,
+      // isScreenShareEnabled: false,
     }
   },
   computed: {
@@ -126,7 +128,7 @@ export default {
     // 貌似预留通知？
     // showNotification: Boolean,
     ovSettings: OvSettingsModel,
-    // 视频流开关
+    // 开关
     isWebcamAudioEnabled: Boolean,
     // 别人音频开关
     isAutoLayout: Boolean,
@@ -135,11 +137,22 @@ export default {
   },
   created() {
     this.mySessionId = this.tokenService.getSessionId()
-    this.newMessagesNum =   this.chatService.messagesUnreadObs()
-    this.isScreenShareEnabled = this.screenShareState
-    this.isWebcamVideoEnabled = this.webcamVideoActive
+    this.newMessagesNum = this.chatService.messagesUnreadObs()
+    // this.isScreenShareEnabled = this.screenShareState
+    // this.isWebcamVideoEnabled = this.webcamVideoActive
   },
-  methods: {},
+  methods: {
+    toggleChat() {
+      this.chatService.toggleChat()
+    },
+    toggleFullscreen() {
+      utilsSrv.toggleFullscreen(document.getElementById("videoRoomNavBar"))
+      this.fullscreenIcon =
+        this.fullscreenIcon === VideoFullscreenIcon.BIG
+          ? VideoFullscreenIcon.NORMAL
+          : VideoFullscreenIcon.BIG
+    },
+  },
 }
 </script>
  

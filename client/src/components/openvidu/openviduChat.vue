@@ -88,8 +88,8 @@ export default {
     scrollToBottom() {
       setTimeout(() => {
         try {
-          this.$refs.chatScroll.nativeElement.scrollTop =
-            this.$refs.chatScroll.nativeElement.scrollHeight
+          this.$refs.chatScroll.scrollTop =
+            this.$refs.chatScroll.scrollHeight
         } catch (err) {
           console.log(err,"滑动失败")
         }

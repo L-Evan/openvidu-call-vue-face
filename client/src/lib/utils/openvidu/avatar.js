@@ -31,7 +31,7 @@ class AvatarService {
     console.log("Capturing avatar ...")
     const avatar = document.createElement("canvas")
     const video = this.localUsersService.getWebcamPublisher().videos[0].video
-
+    console.log(video)
     avatar.className = "user-img"
     avatar.width = 100
     avatar.height = 100
@@ -47,7 +47,7 @@ class AvatarService {
   getAvatarFromConnectionData (data) {
     let avatar
     try {
-      avatar = JSON.parse(data).avatar
+      avatar = JSON.parse(data?.split("%/%")[0]).avatar
     } catch (error) {
       avatar = this.getOpenViduAvatar()
     }

@@ -1,4 +1,4 @@
-export class StorageService {
+class StorageService {
   constructor () {
     this.storage = window.localStorage
   }
@@ -17,3 +17,4 @@ export class StorageService {
     this.storage.clear()
   }
 }
+export  const storageSrv = new StorageService()

@@ -29,7 +29,7 @@ router.beforeEach(async(to, from, next) => {
     } else {
       const hasGetUserInfo =   store.getters.roles.length!==0
      
-      console.log("you权限",hasGetUserInfo)
+      console.log("有权限，可访问",hasGetUserInfo)
       if (hasGetUserInfo) {
         next()
       } else {

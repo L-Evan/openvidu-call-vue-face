@@ -20,6 +20,7 @@ class LocalUsersService {
     return this.OVUsers()[0].isScreen()
   }
   enableWebcamUser () {
+    console.log("放屏幕和视频",[this.webcamUser, this.screenUser])
     this._OVUsers([this.webcamUser, this.screenUser])
   }
   getWebcamPublisher () {
@@ -66,6 +67,7 @@ class LocalUsersService {
       this._OVUsers([this.webcamUser, this.screenUser])
       return
     }
+    console.log("只放屏幕")
     // 不给屏幕权限的情况
     this._OVUsers([this.screenUser])
   }
@@ -104,6 +106,35 @@ class LocalUsersService {
   }
   getAvatar () {
     return this.webcamUser.getAvatar()
+  }
+  // ui相关
+  // 改变大小属性
+  toggleZoom (connectionId) {
+    if (this.webcamUser.getConnectionId() === connectionId) {
+      this.webcamUser.setVideoSizeBig(!this.webcamUser.isVideoSizeBig())
+      return
+    }
+    this.screenUser.setVideoSizeBig(!this.screenUser.isVideoSizeBig())
+  }
+  resetUsersZoom () {
+    this.webcamUser?.setVideoSizeBig(false)
+    this.screenUser?.setVideoSizeBig(false)
+  }
+
+  clear () {
+    this.screenUser = null
+    this.webcamUser = new UserModel()
+    this.disableScreenUser()
+  }
+  hasWebcamAudioActive () {
+    return this.webcamUser?.isAudioActive()
+  }
+  hasScreenAudioActive () {
+    return this.screenUser?.isAudioActive()
+  }
+
+  isScreenShareEnabled () {
+    return this.areBothConnected() || this.isOnlyScreenConnected()
   }
 }
 

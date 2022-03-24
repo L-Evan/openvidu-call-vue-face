@@ -10,30 +10,30 @@ import OvVideo from "@/components/openvidu/OvVideo"
 
 export default {
   name: "UserVideo",
-
   components: {
     OvVideo,
   },
-
   props: {
-    streamManager: Object,
+    streamManager: Object
   },
-
   computed: {
     clientData () {
       const { clientData } = this.getConnectionData()
       return clientData
-    },
+    }
   },
   methods: {
     getConnectionData () {
-      const { connection } = this.streamManager.stream
+      console.log("vedio流",this.streamManager?.stream)
       // json格式
-      const jsonData = connection.data
-      const [clientDataJson,serverDataJson] = jsonData.split("%/%")
-      console.log(clientDataJson,serverDataJson,"new vedio")
+      const jsonData = this.streamManager?.stream?.connection?.data
+      if(!jsonData){
+        return ""
+      }
+      const clientDataJson = jsonData.split("%/%")[0]
+      // console.log(clientDataJson,serverDataJson,"new vedio")
       return JSON.parse(clientDataJson)
-    },
-  },
+    }
+  }
 }
 </script>
