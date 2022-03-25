@@ -9,7 +9,7 @@ const getDefaultState = () => {
     remoteUsers:[],
     remoteUserNameList:[],
     screenShareState:false,
-    webcamVideoActive: false ,
+    webcamVideoActive: true ,
     messagesUnread:0,messageList:[],toggleChat:false,
     
   }

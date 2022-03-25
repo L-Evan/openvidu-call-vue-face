@@ -76,7 +76,7 @@
           <div id="avatarSection">
             <div class="">
               <el-radio
-                v-model="form.avatar"
+                v-model="form.avatarType"
                 :label="AvatarType.CAPTURED"
                 id="avatarContainer"
               >
@@ -85,7 +85,7 @@
                 </div>
                 <el-avatar :src="capturedAvatar" id="avatarImg" />
               </el-radio>
-              <el-radio v-model="form.avatar" :label="AvatarType.DEFAULT" id="avatarContainer">
+              <el-radio v-model="form.avatarType" :label="AvatarType.DEFAULT" id="avatarContainer">
                 <img
                   id="avatarImg"
                   src="@/assets/resources/images/openvidu_globe_bg_transp_cropped.png"
@@ -208,7 +208,8 @@ export default {
   extends: CommonPage,
 
   data() {
-    return {AvatarType,
+    return {
+      AvatarType,
       // 所有用户
       avatarService: null,
       // 是否显示卡片  等待权限获取成功再显示
@@ -222,7 +223,6 @@ export default {
       isAutoPublish: false,
       // 是否使用设备
       isAudioActive: false,
-      isVideoActive: true,
       // 共享屏幕
       screenStr: "",
       microphones: [],
@@ -233,8 +233,7 @@ export default {
         nickName: "",
         micSelectedDevice: "",
         camSelectedDevice: "",
-        // type
-        avatar: "",
+        avatarType: AvatarType.DEFAULT,
       },
       rules: {
         nickName: [{ required: true, message: "请输入昵称", trigger: "blur" }],
@@ -251,12 +250,12 @@ export default {
     },
   },
   computed: {
-    ...mapGetters(["localUsers", "devices", "screenShareState"]),
+    ...mapGetters(["localUsers", "devices", "screenShareState","webcamVideoActive"]),
     switchAudio() {
       return this.isAudioActive && this.hasAudioDevices
     },
     switchVideo() {
-      return this.isVideoActive && this.hasVideoDevices
+      return this.webcamVideoActive && this.hasVideoDevices
     },
   },
   created() {},
@@ -298,12 +297,12 @@ export default {
         }
         // Publish Webcam
         openViduWebRTCService.publishWebcamVideo(true)
-        this.isVideoActive = true
+        // this.isVideoActive = true
         return
       }
       // Unpublish webcam
       openViduWebRTCService.publishWebcamVideo(false)
-      this.isVideoActive = false
+      // this.isVideoActive = false
     },
     onNicknameUpdate() {
       localUsersService.updateUsersNickname(this.form.nickName)
@@ -323,9 +322,9 @@ export default {
     },
     // 点击开启视频
     toggleCam() {
-      this.isVideoActive = !this.isVideoActive
+      const isVideoActive = !this.webcamVideoActive
       // 发布视频  并且 更新webrt发布状态
-      openViduWebRTCService.publishWebcamVideo(this.isVideoActive)
+      openViduWebRTCService.publishWebcamVideo(isVideoActive)
       // 2个代表关闭视频
       if (localUsersService.areBothConnected()) {
         localUsersService.disableWebcamUser()
@@ -372,7 +371,7 @@ export default {
       const videoSource = this.hasVideoDevices ? camStorageDevice : false
       const audioSource = this.hasAudioDevices ? micStorageDevice : false
       const publishAudio = this.hasAudioDevices ? this.isAudioActive : false
-      const publishVideo = this.hasVideoDevices ? this.isVideoActive : false
+      const publishVideo = this.hasVideoDevices ? this.webcamVideoActive : false
       const mirror =
         this.camSelected && this.camSelected.type === CameraType.FRONT
       const properties = {
@@ -416,7 +415,7 @@ export default {
       // 校验 this.nicknameFormControl.valid
       this.$refs["form"].validate((valid) => {
         if (valid) {
-          avatarService.setFinalAvatar(this.form.avatar)
+          avatarService.setFinalAvatar(this.form.avatarType)
           this.$emit("join")
           return true
         } else {

@@ -31,10 +31,9 @@ class ChatService {
     this.messagesUnread = 0
     this.chatOpened = this.toggleChatObs()
   }
-  // 无组件=》 初始化?
+  // 初始化事件
   setChatComponent (chatSidenav) {
     this.chatComponent = chatSidenav
-
   }
 
   subscribeToChat () {

@@ -1,7 +1,6 @@
 <template>
   <!-- @externalConfig="externalConfig"  -->
   <!-- @ovSettings="ovSettings" -->
-
   <el-container style="height: 100%" id="videoRoomNavBar">
     <el-header v-show="joinedVidioRoom"
       ><openvidu-controler
@@ -14,6 +13,7 @@
         :hasVideoDevices="hasVideoDevices"
         :hasAudioDevices="hasAudioDevices"
         :isAutoLayout="isAutoLayout"
+        :faceService ="faceService"
 			:isWebcamAudioEnabled="toolbarMicIconEnabled()"
         
         :isConnectionLost="isConnectionLost"
@@ -95,6 +95,7 @@
 <script>
 import vedioStream from "@/components/openvidu/openviduStream"
 // import UserVideo from "@/components/openvidu/UserVideo"
+import { faceService } from "@/lib/utils/openvidu/faceService"
 
 import { openViduLayoutService } from "@/lib/utils/openvidu/layout"
 import { ExternalConfigModel } from "@/lib/utils/openvidu/openviduExternalConfig"
@@ -165,7 +166,7 @@ export default {
     }
   },
   // 父beforeCreate-> 父create -> 子beforeCreate-> 子created -> 子mounted -> 父mounted
-  async created() {
+  created() {
     this.externalConfigInit()
     localUsersService.initialize()
     openViduWebRTCService.initialize()
@@ -177,6 +178,9 @@ export default {
     this.ovSettings.setScreenSharing(
       this.ovSettings.hasScreenSharing() && !utilsSrv.isMobile()
     )
+    // 加载人脸识别
+    this.faceService = new faceService()
+    this.faceService.initialize()
   },
   mounted() {
     this.chatSidenav = this.$refs["chatSidenav"]
@@ -242,9 +246,9 @@ export default {
       this.subscribeToStreamPropertyChange()
       this.subscribeToNicknameChanged()
       //ref 聊天组件挂载到service  need toggle()
-      this.chatService.setChatComponent(this.chatSidenav)
+      chatService.setChatComponent(this.chatSidenav)
       // 监听chat事件
-      this.chatService.subscribeToChat()
+      chatService.subscribeToChat()
       // 延时么 获取关闭情况 还不是特别了解  开关抽屉 需要更新布局
       // this.subscribeToChatComponent()
       // 监听 重新链接，更新链接情况：如丢失

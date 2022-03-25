@@ -36,16 +36,7 @@
         </button>
         <el-form id="nicknameForm">
           <el-form-item color="primary">
-            <!-- [formControl]="nicknameFormControl"
-              [errorStateMatcher]="matcher"
-              (keypress)="eventKeyPress($event)" -->
             <el-input :placeholder="user.nickname" autocomplete="off" />
-            <!-- <mat-error *ngIf="nicknameFormControl.hasError('required')">
-              Nickname is <strong>required</strong>
-            </mat-error>
-            <mat-error *ngIf="nicknameFormControl.hasError('maxlength')">
-              Nickname is <strong>too long!</strong>
-            </mat-error> -->
           </el-form-item>
         </el-form>
       </div>
@@ -84,9 +75,7 @@
             :icon="this.videoSizeIcon"
           >
             <!-- 不同icon -->
-            <span v-if="videoSizeIcon === videoSizeIconEnum.NORMAL"
-              >Zoom out</span
-            >
+            <span v-if="videoSizeIcon === videoSizeIconEnum.NORMAL" >Zoom out</span>
             <span v-if="videoSizeIcon === videoSizeIconEnum.BIG">Zoom in</span>
           </el-dropdown-item>
           <!-- 控制他人音频播放 不影响左下角 -->

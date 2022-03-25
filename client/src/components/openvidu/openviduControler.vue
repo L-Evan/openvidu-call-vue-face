@@ -71,13 +71,17 @@
             v-if="ovSettings"
           >
           </el-button>
-
           <!-- Leave seassion button -->
           <el-button
             icon="el-icon-remove"
             style="color: red"
             @click="$emit('leaveSessionButtonClicked')"
             v-if="ovSettings"
+          >
+          </el-button>
+          <el-button
+            icon="el-icon-view"
+            @click="checkStart"
           >
           </el-button>
         </el-button-group>
@@ -98,6 +102,7 @@
 </template>
 
 <script>
+import { faceService } from "@/lib/utils/openvidu/faceService"
 import { mapGetters } from "vuex"
 import { localUsersService } from "@/lib/utils/openvidu/openviduMainUser"
 import { utils as utilsSrv } from "@/lib/utils/openvidu/openviduUtils"
@@ -113,7 +118,7 @@ export default {
       fullscreenIcon: VideoFullscreenIcon.BIG,
       tokenService,
       chatService,
-      localUsersService
+      localUsersService,
       // isWebcamVideoEnabled: false,
       // isScreenShareEnabled: false,
     }
@@ -134,6 +139,7 @@ export default {
     isAutoLayout: Boolean,
     hasVideoDevices: Boolean,
     hasAudioDevices: Boolean,
+    faceService: faceService,
   },
   created() {
     this.mySessionId = this.tokenService.getSessionId()
@@ -152,6 +158,10 @@ export default {
           ? VideoFullscreenIcon.NORMAL
           : VideoFullscreenIcon.BIG
     },
+    checkStart(){
+      
+      this.faceService.startCheckFace()
+    }
   },
 }
 </script>
