@@ -205,6 +205,9 @@ export default {
     })
   },
   methods: {
+    removeUser() {
+      // api.removeToken({ sessionName: this.mySessionId, token: this.token })
+    },
     // 检测窗口大小控制聊天框样子
     // checkSizeComponent =》sidenavMode
     /**
