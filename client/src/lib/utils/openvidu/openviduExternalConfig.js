@@ -23,7 +23,6 @@ export class ExternalConfigModel {
   getTokens () {
     return this.tokens
   }
-
   getScreenToken () {
     return this.tokens[1]
   }

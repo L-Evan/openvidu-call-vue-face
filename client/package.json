@@ -22,6 +22,7 @@
     "bootstrap": "^5.0.1",
     "cache-loader": "^4.1.0",
     "core-js": "3.9.1",
+    "echarts": "^5.3.1",
     "element-ui": "2.13.2",
     "face-api.js": "^0.22.2",
     "i": "^0.3.6",
@@ -42,6 +43,7 @@
     "vue": "^2.6.14",
     "vue-amap": "^0.5.10",
     "vue-animeta": "^1.0.2",
+    "vue-echarts": "^6.0.2",
     "vue-eslint-parser": "^7.6.0",
     "vue-router": "^3.5.1",
     "vuex": "^3.6.2",
@@ -54,6 +56,7 @@
     "@babel/runtime": "^7.4.5",
     "@babel/runtime-corejs2": "^7.4.5",
     "@babel/runtime-corejs3": "^7.4.5",
+    "@vue/composition-api": "^1.4.9",
     "autoprefixer": "^10.2.5",
     "babel-loader": "^8.0.6",
     "clean-webpack-plugin": "^3.0.0",
@@ -83,7 +86,7 @@
     "vue-template-compiler": "^2.6.14",
     "webpack": "^5.58.2",
     "webpack-cli": "^4.9.0",
-    "webpack-dev-server": "^4.3.1",
+    "webpack-dev-server": "^4.7.4",
     "webpack-merge": "^5.7.3"
   },
   "lint": "eslint --ext .js,.vue src --fix"

@@ -3,9 +3,12 @@
     ref="streams"
     v-if="user"
     class="OT_widget-container"
-    
     @dblclick="toggleVideoSize"
-    :id="(user.streamManager && user.streamManager.stream) ?user.streamManager.stream.streamId:''"
+    :id="
+      user.streamManager && user.streamManager.stream
+        ? user.streamManager.stream.streamId
+        : ''
+    "
   >
     <!-- toggleNicknameForm 名字修改 我觉得没必要 -->
     <div class="nickname" :class="{ fullscreen: isFullscreen }">
@@ -43,6 +46,7 @@
     </div>
     <!-- [mutedSound]="mutedSound" -->
     <ov-video
+      is-room="true"
       :mutedSound="mutedSound"
       :stream-manager="user.streamManager"
       @toggleVideoSizeEvent="toggleVideoSize($event)"
@@ -75,7 +79,9 @@
             :icon="this.videoSizeIcon"
           >
             <!-- 不同icon -->
-            <span v-if="videoSizeIcon === videoSizeIconEnum.NORMAL" >Zoom out</span>
+            <span v-if="videoSizeIcon === videoSizeIconEnum.NORMAL"
+              >Zoom out</span
+            >
             <span v-if="videoSizeIcon === videoSizeIconEnum.BIG">Zoom in</span>
           </el-dropdown-item>
           <!-- 控制他人音频播放 不影响左下角 -->
@@ -168,9 +174,12 @@ export default {
       return this.user.streamManager?.stream?.audioActive
     },
     // 监听失效  待分析
-    container_id(){
-      console.log("更新id:","container-" +this.user.streamManager?.stream?.streamId)
-      return "container-" +this.user.streamManager?.stream?.streamId
+    container_id() {
+      console.log(
+        "更新id:",
+        "container-" + this.user.streamManager?.stream?.streamId
+      )
+      return "container-" + this.user.streamManager?.stream?.streamId
     },
     isRemote() {
       return this.user.streamManager?.remote
@@ -179,7 +188,7 @@ export default {
       return (
         this.user.streamManager?.stream?.typeOfVideo === videoTypeEnum.SCREEN
       )
-    }
+    },
   },
   watch: {
     // "user.streamManager.stream": {
@@ -219,9 +228,7 @@ export default {
     },
     // 改全屏
     toggleFullscreen() {
-      utilsSrv.toggleFullscreen(
-        this.$refs["streams"]
-      )
+      utilsSrv.toggleFullscreen(this.$refs["streams"])
     },
     toggleSound() {
       this.mutedSound = !this.mutedSound
@@ -247,7 +254,7 @@ export default {
 <style src="@/styles/openvidu/openviduStream.css" scoped></style>
 
 <style scoped>
-.OT_widget-container >>> .el-icon-turn-off-microphone{
-  margin-top:6px;
+.OT_widget-container >>> .el-icon-turn-off-microphone {
+  margin-top: 6px;
 }
 </style>

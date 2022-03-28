@@ -1,8 +1,7 @@
 import store from "@/store/index"
-const _ovSettings = setting => store.commit("openvidu/SET_OvSettings", setting)
 export class OvSettingsModel {
   constructor () {
-    this._ovSettings = _ovSettings
+    this._ovSettings = setting => store.commit("openvidu/SET_OvSettings", setting)
     this.ovSettings = {
       // 聊天
       chat: true,

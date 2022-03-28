@@ -129,7 +129,6 @@ export default {
   props: {
     isConnectionLost: Boolean,
     // lightTheme: Boolean,
-    // compact: Boolean,
     // 貌似预留通知？
     // showNotification: Boolean,
     ovSettings: OvSettingsModel,
@@ -138,8 +137,7 @@ export default {
     // 别人音频开关
     isAutoLayout: Boolean,
     hasVideoDevices: Boolean,
-    hasAudioDevices: Boolean,
-    faceService: faceService,
+    hasAudioDevices: Boolean
   },
   created() {
     this.mySessionId = this.tokenService.getSessionId()
@@ -159,8 +157,7 @@ export default {
           : VideoFullscreenIcon.BIG
     },
     checkStart(){
-      
-      this.faceService.startCheckFace()
+      faceService.startCheckFace()
     }
   },
 }

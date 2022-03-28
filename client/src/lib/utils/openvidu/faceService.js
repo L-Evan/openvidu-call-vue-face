@@ -25,7 +25,7 @@ let minConfidence = 0.5
 let inputSize = 512
 let scoreThreshold = 0.5
 
-export class faceService {
+class FaceService {
   /**
    * @param {string} url
    * @param {string} apiKey
@@ -36,6 +36,9 @@ export class faceService {
    * @param {boolean} [debug=false]
    */
   constructor () {
+    this.loadStatuc = false
+    this.setTimeCheck = false
+    this.start = false
     // 选用模型
     this.selectedFaceDetector = SSD_MOBILENETV1
   }
@@ -45,10 +48,12 @@ export class faceService {
     //   console.log("未加载数据，正在加载")
     //   await this.initialize()
     // }
-    await this.initialize()
+    if(!this.loadStatuc)
+      await this.initialize()
     console.log("start check face")
     // 开始检测时间
     this.checkStartTime = Date.now()
+    this.start = true
     this.closeEysCount = 0
     this.openMouthCount = 0
     this.chectCount = 0
@@ -63,6 +68,7 @@ export class faceService {
     await nets.faceLandmark68Net.loadFromUri("/models")
     // 检测表情，可以不经过68
     await loadFaceExpressionModel("/models")
+    this.loadStatuc = true
     console.log("模型加载完毕")
   }
   /**
@@ -105,9 +111,15 @@ export class faceService {
   }
   /** @name 人脸检测 */
   async detectFace () {
+    if (!this.start) {
+      console.log("检测没有开始")
+      return
+    }
     console.log("---------------检测中------------------")
-    const video = localUsersService.getWebcamPublisher().videos[1]?.video
-    console.log("检测", video)
+    const videos = localUsersService.getWebcamPublisher().videos
+    const roomvideos = [...videos.filter(v => v.id.indexOf("room") > -1)]
+    const video = roomvideos.length ? roomvideos[0].video : null
+    console.log("检测video :", video)
     if (!video || !localUsersService.hasWebcamVideoActive()) {
       console.log("没有检测到视频")
       return
@@ -141,7 +153,11 @@ export class faceService {
     }
     console.log("检测时间: " + (Date.now() - startTime))
     // 定时检测
-    setTimeout(() => this.detectFace(), result?0:1000)
+    if (this.setTimeCheck)
+      this.setTimeoutContainer = setTimeout(
+        () => this.detectFace(),
+        result ? 0 : 1000
+      )
   }
 
   // 情绪识别相关
@@ -155,4 +171,8 @@ export class faceService {
     const m3 = this.openMouthCount / this.chectCount
     return m1 + 0.8 * m2 + 0.5 * m3
   }
+  clear () {
+    this.start = false
+  }
 }
+export const faceService = new FaceService()

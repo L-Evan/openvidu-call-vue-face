@@ -13,7 +13,6 @@
         :hasVideoDevices="hasVideoDevices"
         :hasAudioDevices="hasAudioDevices"
         :isAutoLayout="isAutoLayout"
-        :faceService ="faceService"
 			:isWebcamAudioEnabled="toolbarMicIconEnabled()"
         
         :isConnectionLost="isConnectionLost"
@@ -97,7 +96,7 @@ import vedioStream from "@/components/openvidu/openviduStream"
 // import UserVideo from "@/components/openvidu/UserVideo"
 import { faceService } from "@/lib/utils/openvidu/faceService"
 
-import { openViduLayoutService } from "@/lib/utils/openvidu/layout"
+import { openViduLayoutService as oVLayout } from "@/lib/utils/openvidu/layout"
 import { ExternalConfigModel } from "@/lib/utils/openvidu/openviduExternalConfig"
 import { storageSrv } from "@/lib/utils/openvidu/newStory"
 import { chatService } from "@/lib/utils/openvidu/openviduWechat"
@@ -121,8 +120,9 @@ import CommonPage from "@/lib/utils/mixin/CommonPage"
 export default {
   mixins: [CommonPage],
   ROUTER_NAME: "meettest",
-  ROUTER_TITLE: "视频会议",
+  ROUTER_TITLE: "config",
   name: "meettest",
+  ROUTER_HIDDEN:true,
   ROUTER_ICON: "el-icon-date",
   components: {
     openviduConfig,
@@ -144,48 +144,47 @@ export default {
   },
   data() {
     return {
-      oVLayout: openViduLayoutService,
-      chatService,
-      // 控制大小调整
+      // 挂载事件集合
       removeEmit: [],
-      OV: undefined,
-      //------------------
-      ovSettings: null, //OvSettingsModel,
-      compact: false,
-      sidenavMode: "side", // 'side' | 'over' =
+      // 设置
+      ovSettings: null, //OvSettingsModel
       showConfigRoomCard: true,
+      // 个人会议
+      // 屏幕
       session: null, //Session,
-      sessionScreen: null, //Session,
-      participantsNameList: [],
-      // 链接状态
+      sessionScreen: null, //Session
+      // session链接状态
       isConnectionLost: false,
       // 播放音频开关
       isAutoLayout: true,
+      // 设备是否拥有
       hasVideoDevices: true,
       hasAudioDevices: true,
     }
   },
   // 父beforeCreate-> 父create -> 子beforeCreate-> 子created -> 子mounted -> 父mounted
   created() {
+    // 加载人脸识别
+    faceService.initialize()
+  },
+  mounted() {
+    // 外部配置 传进来 此处做模拟
     this.externalConfigInit()
+
     localUsersService.initialize()
     openViduWebRTCService.initialize()
     // setting
-    this.ovSettings = new OvSettingsModel()
+    this.ovSettings = this.externalConfig ? this.externalConfig.getOvSettings() : new OvSettingsModel()
+		
     // 代表现在有setting
     this.ovSettings._ovSettings(this.ovSettings)
-
     this.ovSettings.setScreenSharing(
       this.ovSettings.hasScreenSharing() && !utilsSrv.isMobile()
     )
-    // 加载人脸识别
-    this.faceService = new faceService()
-    this.faceService.initialize()
-  },
-  mounted() {
+    // 组件
     this.chatSidenav = this.$refs["chatSidenav"]
 
-    // 监听记得卸载
+    // 事件监听【】
     this.removeEmit.push({ type: "resize", fun: this.updateLayout })
     this.removeEmit.push({ type: "beforeunload", fun: this.leaveSession })
     window.addEventListener("resize", this.updateLayout)
@@ -196,8 +195,9 @@ export default {
     // To avoid 'Connection lost' message uses session.off()
     // this.session?.off("reconnecting")
     remoteUsersService.clear()
-    this.oVLayout.clear()
+    oVLayout.clear()
     localUsersService.clear()
+    faceService.clear()
     this.session = null
     this.sessionScreen = null
     this.removeEmit.forEach((item) => {
@@ -205,8 +205,13 @@ export default {
     })
   },
   methods: {
+    // 检测窗口大小控制聊天框样子
+    // checkSizeComponent =》sidenavMode
+    /**
+     * 更新布局
+     */
     updateLayout() {
-      this.oVLayout.update()
+      oVLayout.update()
     },
     isSmallVideo(localUser) {
       return !localUser.streamManager?.stream?.videoActive
@@ -215,17 +220,13 @@ export default {
       console.log("onConfigRoomJoin：加入会议")
       this.hasVideoDevices = oVDevicesService.hasVideoDeviceAvailable()
       this.hasAudioDevices = oVDevicesService.hasAudioDeviceAvailable()
-      this.showConfigRoomCard = false
-      // vuex
-      // this.localUsers = localUsersService.OVUsers()
-      // this.remoteUsersSubscription = remoteUsersService.remoteUsers()
-      // this.remoteUserNameSubscription = remoteUsersService.remoteUserNameList()
+      this.showConfigRoomCard = false 
 
       tokenService.initialize(this.ovSettings)
 
       setTimeout(() => {
         // 初始化会议布局
-        this.oVLayout.initialize()
+        oVLayout.initialize()
         // 控制聊天框
         // this.checkSizeComponent()
         this.joinToSession()
@@ -290,7 +291,7 @@ export default {
       }
       // !Deprecated
       // this._joinSession.emit()
-      this.oVLayout.update()
+      oVLayout.update()
     },
     // 链接
     async connectWebcamSession() {
@@ -456,7 +457,7 @@ export default {
         }
       }
       // 更新页面 dom改style模式
-      this.oVLayout.update()
+      oVLayout.update()
     },
     // 改变屏幕
     onReplaceScreenTrack(event) {
@@ -468,8 +469,7 @@ export default {
       // 断开链接 session disconnect and stop stream
       openViduWebRTCService.disconnect()
       // 回页面
-      // this.$router.push({ path: "/openvidu" })
-      location.reload()
+      this.$router.push({ name: "meet" })
     },
     emitPublisher($event) {
       console.log("新public", $event)
@@ -593,7 +593,7 @@ export default {
         // 关闭监听声音
         this.session.off("publisherStartSpeaking")
         this.resetAllBigElements()
-        this.oVLayout.update()
+        oVLayout.update()
         return
       }
       console.log("Screen is enabled. Speech detection has been rejected")

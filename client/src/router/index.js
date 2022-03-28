@@ -19,7 +19,7 @@ export const constantRoutes = [
   {
     name: "openvidu",
     path: "/openvidu",
-    component: resolve => require(["@/views/main/test.vue"], resolve)
+    component: resolve => require(["@/views/main/vedioRoom.vue"], resolve)
   },
   { path: "*", redirect: "/error/404", hidden: true }
 ]

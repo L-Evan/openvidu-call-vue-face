@@ -9,7 +9,7 @@ export default {
   watch: {
     streamManager(streamManager) {
       if (streamManager?.addVideoElement) {
-        console.log("watch: 出现视频流",streamManager)
+        console.log("watch: 出现视频流", streamManager)
       }
       setTimeout(() => {
         if (this._videoElement && streamManager) {
@@ -30,12 +30,15 @@ export default {
   props: {
     streamManager: Object,
     mutedSound: Boolean,
+    isRoom: Boolean,
   },
   computed: {
     id() {
-      return this.streamManager && this.streamManager.stream
+      let id = this.isRoom ? "room-" : ""
+      id+= this.streamManager?.stream?.streamId
         ? "video-" + this.streamManager.stream.streamId
         : "video-undefined"
+      return  id
     },
   },
   mounted() {

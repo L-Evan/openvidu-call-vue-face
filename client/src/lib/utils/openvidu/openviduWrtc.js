@@ -141,7 +141,7 @@ class OpenViduWebrtcService {
   initialize () {
     this.OV = new OpenVidu()
     this.OVScreen = new OpenVidu()
-    // ? 判断是否生环境
+    // 判断是否生环境
     if (environment.production) {
       // Disable all logging except error level
       this.OV.enableProdMode()

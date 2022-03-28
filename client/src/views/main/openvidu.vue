@@ -110,7 +110,7 @@ let scoreThreshold = 0.5
 
 export default {
   ROUTER_NAME: "meet",
-  ROUTER_TITLE: "视频会议",
+  ROUTER_TITLE: "openvidu测试",
   name: "openvidu",
   ROUTER_ICON: "el-icon-date",
   components: {

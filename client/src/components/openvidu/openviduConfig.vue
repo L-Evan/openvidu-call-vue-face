@@ -574,9 +574,13 @@ export default {
       this.camSelected = devicesService.getCamSelected() //
       this.micSelected = devicesService.getMicSelected()
     },
-    // 暂时固定session Name
+    // session Name
     setSessionName() {
-      this.mySessionId = this.$route.params.sessionName || "aa"
+      this.mySessionId = this.$route.query.sessionName
+      if(!this.mySessionId){
+        this.$router.push({name:"meet"})
+        return
+      }
       tokenService.setSessionId(this.mySessionId)
     },
     close() {

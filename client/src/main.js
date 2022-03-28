@@ -42,6 +42,19 @@ VueAMap.initAMapApiLoader({
   v: "1.4.15",
   uiVersion: "1.1"
 })
+// eccharts
+import ECharts from "vue-echarts"
+import { use } from "echarts/core"
+
+// import ECharts modules manually to reduce bundle size
+import { CanvasRenderer } from "echarts/renderers"
+import { BarChart } from "echarts/charts"
+import { GridComponent, TooltipComponent } from "echarts/components"
+
+use([CanvasRenderer, BarChart, GridComponent, TooltipComponent])
+
+// register globally (or you can do it locally)
+Vue.component("v-chart", ECharts)
 
 // 路由控制
 // router.beforeEach(async (to, from, next) => {
