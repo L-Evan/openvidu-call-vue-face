@@ -1,8 +1,10 @@
 import { localUsersService } from "./openviduMainUser"
+import { tokenService } from "@/lib/utils/openvidu/openviduToken"
 import {
   headCheck,
   mouthStatusCheck,
-  eyeStatusCheck
+  eyeStatusCheck,
+  cycleComputer
 } from "@/utils/openvidu/faceEvaluation"
 import {
   SsdMobilenetv1Options,
@@ -20,10 +22,11 @@ const SSD_MOBILENETV1 = "ssd_mobilenetv1"
 const TINY_FACE_DETECTOR = "tiny_face_detector"
 // ssd_mobilenetv1 options
 // 最小置信阈值  越高检测越精准
-let minConfidence = 0.5
+const minConfidence = 0.5
 // tiny_face_detector options
-let inputSize = 512
-let scoreThreshold = 0.5
+const inputSize = 512
+const scoreThreshold = 0.5
+const checkCycle = 5
 
 class FaceService {
   /**
@@ -36,32 +39,32 @@ class FaceService {
    * @param {boolean} [debug=false]
    */
   constructor () {
+    this.faces = {}
     this.loadStatuc = false
     this.setTimeCheck = false
     this.start = false
+    this.checkSessionFaces = []
     // 选用模型
     this.selectedFaceDetector = SSD_MOBILENETV1
   }
-  async startCheckFace () {
+  async initialize () {
     // 判断模型加载
     // if (!this.isFaceDetectionModelLoaded()) {
     //   console.log("未加载数据，正在加载")
     //   await this.initialize()
     // }
-    if(!this.loadStatuc)
-      await this.initialize()
+    if (!this.loadStatuc) await this.initializeLoadding()
     console.log("start check face")
     // 开始检测时间
     this.checkStartTime = Date.now()
-    this.start = true
     this.closeEysCount = 0
     this.openMouthCount = 0
-    this.chectCount = 0
+    this.checkCount = 0
     // 情绪判别
     this.emojiCount = {}
-    this.detectFace()
+    // this.detectFace()
   }
-  async initialize () {
+  async initializeLoadding () {
     // SSD 移动网络检测模型 // 微型人脸检测器模型  检测人脸区域
     await this.getCurrentFaceDetectionNet().loadFromUri("/models")
     // 脸部固定住 68火焰脸
@@ -109,10 +112,13 @@ class FaceService {
     }
     return max_key
   }
+  checkStatus () {
+    return this.checkCount > 0 && this.checkCount % checkCycle == 0
+  }
   /** @name 人脸检测 */
-  async detectFace () {
+  async detectFace (currentFaces) {
     if (!this.start) {
-      console.log("检测没有开始")
+      console.log("检测没有初始化")
       return
     }
     console.log("---------------检测中------------------")
@@ -132,47 +138,44 @@ class FaceService {
     console.log("检测结果:", result)
     if (result) {
       console.log("检测结果:", result)
-      // 疲劳值
-      if (result.landmarks._positions) {
-        const face68_ = result.landmarks._positions
-        eyeStatusCheck(face68_)
-        mouthStatusCheck(face68_)
-        headCheck(result)
-      }
-
+      this.checkCount++
+      // 68点
+      // if (result.landmarks._positions) {
+      const face68_ = result.landmarks._positions
+      const eyeData = eyeStatusCheck(face68_)
+      const mouthData = mouthStatusCheck(face68_)
+      const headData = await headCheck(result)
+      // }
       // 情绪
       const { expressions } = result
       const faceStr = this.max_Object(expressions)
       console.log("情绪：" + faceStr)
-      // 表情次数
-      this.emojiCount[faceStr]++
+      const moodData = { faceStr, expressions }
+      const sesstionToken = tokenService.getWebcamToken()
+      if (sesstionToken) {
+        const faceAll = this.faces[sesstionToken]??[]
+        faceAll.push({ moodData, eyeData, mouthData, headData })
+        this.faces[sesstionToken] = faceAll
+      }
+      currentFaces.push({ moodData, eyeData, mouthData, headData })
       // 检测次数
       this.checkCount++
+      if (this.checkStatus(currentFaces)) {
+        // time 先做为5s
+        const focusData = cycleComputer(currentFaces, currentFaces.length, checkCycle)
+      }
+      // 表情次数
+      this.emojiCount[faceStr]++
     } else {
       console.log("检测不到")
     }
     console.log("检测时间: " + (Date.now() - startTime))
-    // 定时检测
-    if (this.setTimeCheck)
-      this.setTimeoutContainer = setTimeout(
-        () => this.detectFace(),
-        result ? 0 : 1000
-      )
-  }
-
-  // 情绪识别相关
-  computerMood () {
-    const t = this.checkStartTime
-    // perclos
-    const m1 = this.closeEysCount / this.chectCount
-    // 平均闭眼
-    const m2 = t / this.closeEysCount
-    // 打哈切频率
-    const m3 = this.openMouthCount / this.chectCount
-    return m1 + 0.8 * m2 + 0.5 * m3
+    return currentFaces
   }
   clear () {
     this.start = false
+    clearTimeout(this.setTimeoutContainer)
+    this.setTimeoutContainer = null
   }
 }
 export const faceService = new FaceService()

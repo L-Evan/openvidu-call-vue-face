@@ -48,10 +48,10 @@ import { use } from "echarts/core"
 
 // import ECharts modules manually to reduce bundle size
 import { CanvasRenderer } from "echarts/renderers"
-import { BarChart } from "echarts/charts"
-import { GridComponent, TooltipComponent } from "echarts/components"
+import { BarChart,PieChart } from "echarts/charts"
+import { GridComponent, TooltipComponent,TitleComponent,LegendComponent } from "echarts/components"
 
-use([CanvasRenderer, BarChart, GridComponent, TooltipComponent])
+use([CanvasRenderer, BarChart, GridComponent, TooltipComponent,TitleComponent,LegendComponent,PieChart])
 
 // register globally (or you can do it locally)
 Vue.component("v-chart", ECharts)

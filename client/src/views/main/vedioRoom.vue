@@ -665,7 +665,7 @@ export default {
         console.log(error)
         this.$message(utilsSrv.handlerScreenShareError(error))
       }
-    },
+    }
   },
 }
 </script>

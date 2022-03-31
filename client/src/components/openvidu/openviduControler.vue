@@ -79,11 +79,7 @@
             v-if="ovSettings"
           >
           </el-button>
-          <el-button
-            icon="el-icon-view"
-            @click="checkStart"
-          >
-          </el-button>
+          <el-button icon="el-icon-view" @click="checkStart"> </el-button>
         </el-button-group>
       </div>
     </el-col>
@@ -113,6 +109,7 @@ import { OvSettingsModel } from "@/lib/utils/openvidu/openviduSetting"
 export default {
   data() {
     return {
+      currentFaces: [],
       // 配置项
       hasScreenSharing: true,
       fullscreenIcon: VideoFullscreenIcon.BIG,
@@ -137,7 +134,7 @@ export default {
     // 别人音频开关
     isAutoLayout: Boolean,
     hasVideoDevices: Boolean,
-    hasAudioDevices: Boolean
+    hasAudioDevices: Boolean,
   },
   created() {
     this.mySessionId = this.tokenService.getSessionId()
@@ -156,9 +153,41 @@ export default {
           ? VideoFullscreenIcon.NORMAL
           : VideoFullscreenIcon.BIG
     },
-    checkStart(){
-      faceService.startCheckFace()
-    }
+    checkStart() {
+      if (faceService.start) {
+        faceService.clear()
+      }
+      faceService.initialize().then(() => {
+        faceService.start = true
+        // 定时检测
+        if (faceService.setTimeCheck) {
+          this.checkFaceByTime(-1)
+          return
+        }
+        this.checkFaceByTime(5)
+      })
+      
+    },
+    checkFaceByTime(time) {
+      console.log("vue", this)
+      let nowTime = 0
+      // xxx.sett   settIME() { THIS }   settIME((){THIS})
+      const oneTimeFun = setTimeout.bind(
+        null,
+        async   () => {
+          console.log("数据", this, this.currentFaces)
+          this.currentFaces = await faceService.detectFace(this.currentFaces)
+          nowTime++
+          if (time == nowTime) {
+            faceService.clear()
+            return 
+          }
+          faceService.setTimeoutContainer = oneTimeFun()
+        },
+        0
+      )
+      faceService.setTimeoutContainer = oneTimeFun()
+    },
   },
 }
 </script>

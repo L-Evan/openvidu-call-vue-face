@@ -46,7 +46,7 @@
     </div>
     <!-- [mutedSound]="mutedSound" -->
     <ov-video
-      is-room="true"
+      :is-room="true"
       :mutedSound="mutedSound"
       :stream-manager="user.streamManager"
       @toggleVideoSizeEvent="toggleVideoSize($event)"

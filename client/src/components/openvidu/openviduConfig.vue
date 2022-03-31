@@ -54,7 +54,7 @@
           </div>
           <div class="avatarButton ng-star-inserted">
             <el-button
-            v-if="hasVideoDevices"
+              v-if="hasVideoDevices"
               @click="captureAvatar"
               type="primary"
               icon="el-icon-camera"
@@ -85,7 +85,11 @@
                 </div>
                 <el-avatar :src="capturedAvatar" id="avatarImg" />
               </el-radio>
-              <el-radio v-model="form.avatarType" :label="AvatarType.DEFAULT" id="avatarContainer">
+              <el-radio
+                v-model="form.avatarType"
+                :label="AvatarType.DEFAULT"
+                id="avatarContainer"
+              >
                 <img
                   id="avatarImg"
                   src="@/assets/resources/images/openvidu_globe_bg_transp_cropped.png"
@@ -98,12 +102,12 @@
               ><el-button icon="el-icon-user-solid" circle></el-button
             ></span>
             <el-input
-             @keyup.enter="joinSession"
+              @keyup.enter="joinSession"
               @change="onNicknameUpdate"
               v-model="form.nickName"
             ></el-input>
           </el-form-item>
-          <el-form-item label="选择音频" v-if=" hasAudioDevices">
+          <el-form-item label="选择音频" v-if="hasAudioDevices">
             <!-- el-icon-turn-off-microphone -->
             <span
               ><el-button
@@ -250,7 +254,12 @@ export default {
     },
   },
   computed: {
-    ...mapGetters(["localUsers", "devices", "screenShareState","webcamVideoActive"]),
+    ...mapGetters([
+      "localUsers",
+      "devices",
+      "screenShareState",
+      "webcamVideoActive",
+    ]),
     switchAudio() {
       return this.isAudioActive && this.hasAudioDevices
     },
@@ -408,6 +417,7 @@ export default {
 
     captureAvatar() {
       this.capturedAvatar = avatarService.createCapture()
+      this.form.avatarType = AvatarType.CAPTURED
     },
     // 进入下个页面
     joinSession() {
@@ -577,8 +587,8 @@ export default {
     // session Name
     setSessionName() {
       this.mySessionId = this.$route.query.sessionName
-      if(!this.mySessionId){
-        this.$router.push({name:"meet"})
+      if (!this.mySessionId) {
+        this.$router.push({ name: "meet" })
         return
       }
       tokenService.setSessionId(this.mySessionId)
