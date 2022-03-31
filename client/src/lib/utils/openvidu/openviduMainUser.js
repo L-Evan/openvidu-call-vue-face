@@ -89,7 +89,8 @@ class LocalUsersService {
     this._OVUsers([this.screenUser])
   }
   isWebCamEnabled () {
-    return this.OVUsers()[0].isCamera()
+    const users = this.OVUsers()
+    return users.length&&users[0].isCamera()
   }
   isOnlyWebcamConnected () {
     return this.isWebCamEnabled() && !this.areBothConnected()

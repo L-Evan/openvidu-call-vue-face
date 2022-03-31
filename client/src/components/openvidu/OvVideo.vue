@@ -30,8 +30,11 @@ export default {
   props: {
     streamManager: Object,
     mutedSound: Boolean,
-    isRoom: Boolean,
-  },
+    isRoom: {
+      type: Boolean,
+      default: false,
+    }, 
+  }, 
   computed: {
     id() {
       let id = this.isRoom ? "room-" : ""
