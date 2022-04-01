@@ -18,7 +18,7 @@ class RemoteUsersService {
       store.commit("openvidu/SET_RemoteUserNameList", users)
     this.remoteUserNameList = () => store.getters.remoteUserNameList
   }
-
+  // 更新界面
   updateUsers () {
     this._remoteUsers(this.users)
   }

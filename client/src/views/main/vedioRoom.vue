@@ -13,8 +13,7 @@
         :hasVideoDevices="hasVideoDevices"
         :hasAudioDevices="hasAudioDevices"
         :isAutoLayout="isAutoLayout"
-			:isWebcamAudioEnabled="toolbarMicIconEnabled()"
-        
+			  :isWebcamAudioEnabled="toolbarMicIconEnabled()"
         :isConnectionLost="isConnectionLost"
       ></openvidu-controler
     ></el-header>
@@ -423,13 +422,14 @@ export default {
         if (openViduWebRTCService.isMyOwnConnection(connectionId)) {
           return
         }
-        // 改变了视频源？
+        // 改变了视频源 开启状态
         if (event.changedProperty === "videoActive") {
+          // 更新页面
           remoteUsersService.updateUsers()
         }
       })
     },
-    // 用户修改姓名
+    // 用户修改姓名(未优化)
     subscribeToNicknameChanged() {
       this.session.on("signal:nicknameChanged", (event) => {
         const connectionId = event.from.connectionId

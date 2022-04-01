@@ -1,10 +1,9 @@
 import { localUsersService } from "./openviduMainUser"
-import { tokenService } from "@/lib/utils/openvidu/openviduToken"
+// import { tokenService } from "@/lib/utils/openvidu/openviduToken"
 import {
   headCheck,
   mouthStatusCheck,
-  eyeStatusCheck,
-  cycleComputer
+  eyeStatusCheck
 } from "@/utils/openvidu/faceEvaluation"
 import {
   SsdMobilenetv1Options,
@@ -26,7 +25,6 @@ const minConfidence = 0.5
 // tiny_face_detector options
 const inputSize = 512
 const scoreThreshold = 0.5
-const checkCycle = 5
 
 class FaceService {
   /**
@@ -41,7 +39,7 @@ class FaceService {
   constructor () {
     this.faces = {}
     this.loadStatuc = false
-    this.setTimeCheck = false
+    this.setMonitorCheck = false
     this.start = false
     this.checkSessionFaces = []
     // 选用模型
@@ -55,8 +53,6 @@ class FaceService {
     // }
     if (!this.loadStatuc) await this.initializeLoadding()
     console.log("start check face")
-    // 开始检测时间
-    this.checkStartTime = Date.now()
     this.closeEysCount = 0
     this.openMouthCount = 0
     this.checkCount = 0
@@ -112,32 +108,37 @@ class FaceService {
     }
     return max_key
   }
-  checkStatus () {
-    return this.checkCount > 0 && this.checkCount % checkCycle == 0
+  addFaceVector (sesstionToken, checkFaces) {
+    if (sesstionToken && checkFaces.length) {
+      const faceAll = this.faces[sesstionToken] ?? []
+      faceAll.push(checkFaces)
+      this.faces[sesstionToken] = faceAll
+    }
   }
   /** @name 人脸检测 */
-  async detectFace (currentFaces) {
+  async detectFace () {
     if (!this.start) {
       console.log("检测没有初始化")
       return
     }
     console.log("---------------检测中------------------")
     const videos = localUsersService.getWebcamPublisher().videos
+    // room
     const roomvideos = [...videos.filter(v => v.id.indexOf("room") > -1)]
     const video = roomvideos.length ? roomvideos[0].video : null
-    console.log("检测video :", video)
     if (!video || !localUsersService.hasWebcamVideoActive()) {
       console.log("没有检测到视频")
       return
     }
-    const startTime = Date.now()
+ 
+    let faceData = null
     // 开始检测
     const result = await detectSingleFace(video)
       .withFaceLandmarks()
       .withFaceExpressions()
-    console.log("检测结果:", result)
+    
     if (result) {
-      console.log("检测结果:", result)
+      console.log("检测到")
       this.checkCount++
       // 68点
       // if (result.landmarks._positions) {
@@ -145,32 +146,18 @@ class FaceService {
       const eyeData = eyeStatusCheck(face68_)
       const mouthData = mouthStatusCheck(face68_)
       const headData = await headCheck(result)
-      // }
       // 情绪
       const { expressions } = result
       const faceStr = this.max_Object(expressions)
-      console.log("情绪：" + faceStr)
       const moodData = { faceStr, expressions }
-      const sesstionToken = tokenService.getWebcamToken()
-      if (sesstionToken) {
-        const faceAll = this.faces[sesstionToken]??[]
-        faceAll.push({ moodData, eyeData, mouthData, headData })
-        this.faces[sesstionToken] = faceAll
-      }
-      currentFaces.push({ moodData, eyeData, mouthData, headData })
+      faceData = { moodData, eyeData, mouthData, headData }
       // 检测次数
       this.checkCount++
-      if (this.checkStatus(currentFaces)) {
-        // time 先做为5s
-        const focusData = cycleComputer(currentFaces, currentFaces.length, checkCycle)
-      }
       // 表情次数
       this.emojiCount[faceStr]++
-    } else {
-      console.log("检测不到")
     }
-    console.log("检测时间: " + (Date.now() - startTime))
-    return currentFaces
+    console.log("检测结果:", result)
+    return faceData 
   }
   clear () {
     this.start = false

@@ -74,7 +74,7 @@ class OpenViduWebrtcService {
         reject()
       })
 
-      // Reeplace track method
+      // Reeplace track method  通过
       // this.webcamMediaStream = await this.OV.getUserMedia(properties);
       // const track: MediaStreamTrack = !!videoSource
       // 	? this.webcamMediaStream.getVideoTracks()[0]
@@ -269,12 +269,14 @@ class OpenViduWebrtcService {
     this.disconnectScreenSession()
     this.videoSource = undefined
     this.audioSource = undefined
+    // 关视频流
     this.stopVideoTracks(
       this.localUsersSrv.getWebcamPublisher()?.stream?.getMediaStream()
     )
     this.stopVideoTracks(
       this.localUsersSrv.getScreenPublisher()?.stream?.getMediaStream()
     )
+    // 关声音流
     this.stopAudioTracks(
       this.localUsersSrv.getWebcamPublisher()?.stream?.getMediaStream()
     )

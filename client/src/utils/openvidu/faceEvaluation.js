@@ -48,6 +48,7 @@ export async function headCheck (result) {
   console.log({ pitch, yaw, roll })
   const k1 = Math.abs(yaw * 100) > 70 ? 0 : 1 - Math.abs(yaw * 100) / 70
   const k2 = Math.abs(pitch * 100) > 60 ? 0 : 1 - Math.abs(pitch * 100) / 60
+   
   if(!k1||!k2){
     console.log("有角度过大",k1+"_"+k2)
   }
@@ -87,15 +88,14 @@ function moodCalculation (moodCounts) {
   return moodCounts.reduce((acc, cur) => acc + cur, 0) * mainPowers[2]
 }
 
-export function cycleComputer (faces, chectCount = 5, checkTime = 5) {
-  console.trace()
+export function cycleComputer (faces, checkTime = 5) { 
   const closeEysCount = faces.filter(face => face.eyeData.eyesClosed).length
   const openMouthCount = faces.filter(face => face.mouthData.mouthOpen).length
   // 68
   const fatigue = fatigueCalculation(
     closeEysCount,
     openMouthCount,
-    chectCount,
+    faces.length,
     checkTime
   )
   // 头部
@@ -108,8 +108,7 @@ export function cycleComputer (faces, chectCount = 5, checkTime = 5) {
   )
   const mood = moodCalculation(moodCounts)
   const result = headTurnDegree + fatigue + mood
-  console.log("计算的三个度", fatigue, headTurnDegree, mood, result)
-  return result
+  return {fatigue, headTurnDegree, mood, result}
 }
 
 /**

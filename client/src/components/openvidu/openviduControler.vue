@@ -2,14 +2,7 @@
   <el-row>
     <el-col :span="4">
       <div>
-        <div style="display: inline-block">
-          <el-avatar
-            src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
-          ></el-avatar>
-        </div>
-        <el-badge :value="12" class="item">
-          <el-tag>悲伤</el-tag>
-        </el-badge>
+        <face-info></face-info>
       </div>
     </el-col>
     <el-col :span="16" fxFlexOrder="2">
@@ -79,7 +72,6 @@
             v-if="ovSettings"
           >
           </el-button>
-          <el-button icon="el-icon-view" @click="checkStart"> </el-button>
         </el-button-group>
       </div>
     </el-col>
@@ -98,7 +90,7 @@
 </template>
 
 <script>
-import { faceService } from "@/lib/utils/openvidu/faceService"
+import faceInfo from "@/components/openvidu/faceInfo"
 import { mapGetters } from "vuex"
 import { localUsersService } from "@/lib/utils/openvidu/openviduMainUser"
 import { utils as utilsSrv } from "@/lib/utils/openvidu/openviduUtils"
@@ -107,9 +99,11 @@ import { chatService } from "@/lib/utils/openvidu/openviduWechat"
 import { tokenService } from "@/lib/utils/openvidu/openviduToken"
 import { OvSettingsModel } from "@/lib/utils/openvidu/openviduSetting"
 export default {
+  components:{
+    faceInfo
+  },
   data() {
     return {
-      currentFaces: [],
       // 配置项
       hasScreenSharing: true,
       fullscreenIcon: VideoFullscreenIcon.BIG,
@@ -152,42 +146,7 @@ export default {
         this.fullscreenIcon === VideoFullscreenIcon.BIG
           ? VideoFullscreenIcon.NORMAL
           : VideoFullscreenIcon.BIG
-    },
-    checkStart() {
-      if (faceService.start) {
-        faceService.clear()
-      }
-      faceService.initialize().then(() => {
-        faceService.start = true
-        // 定时检测
-        if (faceService.setTimeCheck) {
-          this.checkFaceByTime(-1)
-          return
-        }
-        this.checkFaceByTime(5)
-      })
-      
-    },
-    checkFaceByTime(time) {
-      console.log("vue", this)
-      let nowTime = 0
-      // xxx.sett   settIME() { THIS }   settIME((){THIS})
-      const oneTimeFun = setTimeout.bind(
-        null,
-        async   () => {
-          console.log("数据", this, this.currentFaces)
-          this.currentFaces = await faceService.detectFace(this.currentFaces)
-          nowTime++
-          if (time == nowTime) {
-            faceService.clear()
-            return 
-          }
-          faceService.setTimeoutContainer = oneTimeFun()
-        },
-        0
-      )
-      faceService.setTimeoutContainer = oneTimeFun()
-    },
+    }
   },
 }
 </script>
