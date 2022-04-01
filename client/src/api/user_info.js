@@ -24,7 +24,7 @@ class Api {
        password:""
      }) => request.post("/user/passwordLogin", data);
 
-     getInfo = () => request.get("/user/getinfo",{} );
+     getInfo = () => request.get("/user/getinfo",{},false );
       
      logout = ()=> request.get("/user/logout", {});
   
