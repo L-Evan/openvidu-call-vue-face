@@ -102,7 +102,7 @@ class LocalUsersService {
     this._webcamVideoActive(this.webcamUser.isVideoActive())
   }
   updateUsersNickname (nickname) {
-    this.webcamUser.setNickname(nickname)
+    this.webcamUser?.setNickname(nickname)
     this.screenUser?.setNickname(this.getScreenUserName())
   }
   getAvatar () {

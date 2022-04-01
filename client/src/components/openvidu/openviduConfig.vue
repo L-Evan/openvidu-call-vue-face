@@ -187,6 +187,7 @@
 </template>
 
 <script>
+import {mapGetters} from "vuex"
 import { AvatarType } from "@/lib/utils/openvidu/openviduType"
 import { tokenService } from "@/lib/utils/openvidu/openviduToken"
 import { devicesService } from "@/lib/utils/openvidu/device"
@@ -204,7 +205,6 @@ import {
   ScreenType,
   Storage,
 } from "@/lib/utils/openvidu/openviduType"
-import { mapGetters } from "vuex"
 export default {
   components: {
     ovVideo,
@@ -259,6 +259,7 @@ export default {
       "devices",
       "screenShareState",
       "webcamVideoActive",
+      "name"
     ]),
     switchAudio() {
       return this.isAudioActive && this.hasAudioDevices
@@ -272,6 +273,9 @@ export default {
     this.setSessionName()
     await devicesService.initDevices()
     console.log("第一次设备初始化完毕", devicesService)
+    // 名字
+    this.form.nickName = this.name
+    this.onNicknameUpdate()
     this.start()
   },
   methods: {
