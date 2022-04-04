@@ -8,4 +8,14 @@ const removeToken = (data = {
   token: ""
 } ) => request.post("/api-sessions/remove-user", data)
 
-export default {getToken,removeToken}  
+const exit = (data = {
+  sessionName: ""
+} ) => request.post("/api-sessions/exit", data)
+
+const saveFaceData = (data = {
+  sessionName: "",
+  facesData:""
+} ) => request.post("/api-sessions/exit", data)
+
+
+export default {getToken,removeToken,exit,saveFaceData}  
