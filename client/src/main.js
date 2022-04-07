@@ -44,15 +44,16 @@ VueAMap.initAMapApiLoader({
 })
 // eccharts
 import ECharts from "vue-echarts"
-import { use } from "echarts/core"
+// 部分引入
+// import { use } from "echarts/core"
 
-// import ECharts modules manually to reduce bundle size
-import { CanvasRenderer } from "echarts/renderers"
-import { BarChart,PieChart } from "echarts/charts"
-import { GridComponent, TooltipComponent,TitleComponent,LegendComponent } from "echarts/components"
-
-use([CanvasRenderer, BarChart, GridComponent, TooltipComponent,TitleComponent,LegendComponent,PieChart])
-
+// // import ECharts modules manually to reduce bundle size
+// import { CanvasRenderer } from "echarts/renderers"
+// import { BarChart,PieChart } from "echarts/charts"
+// import { GridComponent, TooltipComponent,TitleComponent,LegendComponent } from "echarts/components"
+// use([CanvasRenderer, BarChart, GridComponent, TooltipComponent,TitleComponent,LegendComponent,PieChart])
+// 全引入
+import "echarts"
 // register globally (or you can do it locally)
 Vue.component("v-chart", ECharts)
 

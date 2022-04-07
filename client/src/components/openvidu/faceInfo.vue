@@ -1,5 +1,5 @@
 <template>
-  <div> 
+  <div>
     <div style="display: inline-block">
       <el-avatar
         src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
@@ -8,26 +8,67 @@
     <el-badge :value="12" class="item">
       <el-tag>悲伤</el-tag>
     </el-badge>
-    <el-button icon="el-icon-view" @click="checkStart"> </el-button>
+    <el-tooltip :content="'识别情绪开关: ' + checkFaceStatus" placement="top">
+      <el-switch
+        v-model="checkFaceStatus"
+        active-color="#13ce66"
+        inactive-color="#ff4949"
+        :active-value="true"
+        :inactive-value="false"
+        @change="checkStart"
+      >
+      </el-switch>
+    </el-tooltip>
+    <!-- <el-button icon="el-icon-view" @click="checkStart"> </el-button> -->
   </div>
 </template>
 
 <script>
+
+// import { openViduWebRTCService } from "@/lib/utils/openvidu/openviduWrtc"
+import api from "@/api/openvidu/openvidu"
 import { faceService } from "@/lib/utils/openvidu/faceService"
 import { cycleComputer } from "@/utils/openvidu/faceEvaluation"
 import { tokenService } from "@/lib/utils/openvidu/openviduToken"
 export default {
   data() {
     return {
+      sessionName:"",
+      // 识别开启状态
+      checkFaceStatus: false,
       currentFaces: [],
+      monitSetTimeContain:null
     }
   },
   created() {
     faceService.initialize()
   },
+  mounted() {
+    // this.checkStart()
+    this.monitSaveFaceToServer()
+  },
+  destroyed(){
+    this.monitSetTimeContain && clearInterval(this.monitSetTimeContain)
+  },
   methods: {
+    monitSaveFaceToServer(){
+      let i = 0
+      const sessionName = tokenService.getSessionId()
+      console.log("开始监听数据：", sessionName)
+      
+      const uploadDataFunc = setTimeout.bind(null,async () => {
+        console.log("监听中",i,this.currentFaces.length)
+        if(i < this.currentFaces.length ){
+          console.log("发送数据"+i,sessionName)
+          api.saveFaceData({sessionName,facesData:JSON.stringify(this.currentFaces.slice(i))})
+        }
+        i=this.currentFaces.length
+      }, 1000)
+      this.monitSetTimeContain = uploadDataFunc()
+    },
     checkFaceByTime(cycleTime, monitor = false) {
-      let checkStartTime = Date.now()
+      let checkStartTime = null
+      let checkCount = 0
       // 会议id
       let startSesstionToken = tokenService.getWebcamToken()
       let currentFaces = []
@@ -35,7 +76,11 @@ export default {
       const oneTimeFun = setTimeout.bind(
         null,
         async () => {
+          if(checkCount++===0){
+            checkStartTime = Date.now()
+          }
           const timed = Date.now() - checkStartTime
+          console.log("周期检测时间差："+timed)
           // check
           const checkSesstionToken = tokenService.getWebcamToken()
           if (checkSesstionToken !== startSesstionToken) {
@@ -48,7 +93,9 @@ export default {
             faceService.clear()
             return
           }
+          const checkPointTime = Date.now()
           const faceData = await faceService.detectFace()
+          console.log("单次检测差："+(Date.now()-checkPointTime))
           // const { moodData, eyeData, mouthData, headData } = faceData
           if (faceData) {
             currentFaces.push(faceData)
@@ -60,27 +107,38 @@ export default {
               parseInt(cycleTime / 1000)
             )
             // 所有数据
-            const cycleData = { focusData, currentFaces, upload: false }
+            // ,暂不存到缓存中 currentFaces
+            const cycleData = { checkStartTime,checkEndTime:Date.now(),checkCount,focusData, currentFaces, upload: false }
             // 更新到全局
             this.currentFaces.push(cycleData)
             faceService.addFaceVector(startSesstionToken, cycleData)
-            // 清空
-            checkStartTime = Date.now()
+            checkCount = 0
             currentFaces = []
-
-            if (!monitor) {
-              faceService.clear()
-              return
+          }
+          // 当前页面控制状态 checkFaceStatus
+          if (timed >= cycleTime&&(!monitor||!this.checkFaceStatus)) {
+            if(!monitor){
+              this.checkFaceStatus = false
             }
+            faceService.clear()
+            return
           }
           // next
           faceService.setTimeoutContainer = oneTimeFun()
         },
-        0
+        700
       )
       faceService.setTimeoutContainer = oneTimeFun()
     },
+    /**
+     * faceService.setMonitorCheck 控制是否每次只检测一次
+     * checkFaceStatus 控制是否识别
+     */
     checkStart() {
+      // 当前页面控制
+      if(!this.checkFaceStatus){
+        return
+      }
       if (faceService.start) {
         faceService.clear()
       }

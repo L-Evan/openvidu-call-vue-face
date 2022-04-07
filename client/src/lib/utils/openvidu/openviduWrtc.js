@@ -255,14 +255,15 @@ class OpenViduWebrtcService {
     })
   }
   stopAudioTracks (mediaStream) {
+    // 轨道
     mediaStream?.getAudioTracks().forEach(track => {
       track.stop()
 
       track.enabled = false
     })
-    this.webcamMediaStream?.getAudioTracks().forEach(track => {
-      track.stop()
-    })
+    // this.webcamMediaStream?.getAudioTracks().forEach(track => {
+    //   track.stop()
+    // })
   }
   disconnect () {
     this.disconnectWebcamSession()

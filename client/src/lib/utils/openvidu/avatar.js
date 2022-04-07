@@ -43,7 +43,22 @@ class AvatarService {
     }
     return this.capturedAvatar
   }
+  createCaptureByvideo (video) {
+    console.log("Capturing face avatar ...")
+    const avatar = document.createElement("canvas")
+    // console.log(video)
+    avatar.className = "user-img"
+    avatar.width = 100
+    avatar.height = 100
 
+    if (video) {
+      const avatarContext = avatar.getContext("2d")
+      avatarContext.drawImage(video, 200, 120, 285, 285, 0, 0, 100, 100)
+      return avatar.toDataURL()
+    }
+    return 
+  }
+  
   getAvatarFromConnectionData (data) {
     let avatar
     try {

@@ -3,7 +3,7 @@
   <!-- @ovSettings="ovSettings" -->
   <el-container style="height: 100%" id="videoRoomNavBar">
     <el-header v-show="joinedVidioRoom"
-      ><openvidu-controler
+      ><openvidu-controler v-if="joinedVidioRoom"
         @camButtonClicked="toggleCam"
         @micButtonClicked="toggleMic"
         @screenShareClicked="toggleScreenShare"
@@ -13,14 +13,14 @@
         :hasVideoDevices="hasVideoDevices"
         :hasAudioDevices="hasAudioDevices"
         :isAutoLayout="isAutoLayout"
-			  :isWebcamAudioEnabled="toolbarMicIconEnabled()"
+        :isWebcamAudioEnabled="toolbarMicIconEnabled()"
         :isConnectionLost="isConnectionLost"
       ></openvidu-controler
     ></el-header>
     <el-container>
       <el-container>
         <el-main>
-          <div style="width: 90%; margin: 55px auto">
+          <div style="width: 90%; margin: 55px auto; overflow-y: hidden">
             <openvidu-config
               v-if="showConfigRoomCard"
               :ovSettings="ovSettings"
@@ -116,12 +116,13 @@ import { devicesService as oVDevicesService } from "@/lib/utils/openvidu/device"
 import openviduConfig from "@/components/openvidu/openviduConfig"
 import chat from "@/components/openvidu/openviduChat"
 import CommonPage from "@/lib/utils/mixin/CommonPage"
+import api from "@/api/openvidu/openvidu"
 export default {
   mixins: [CommonPage],
   ROUTER_NAME: "meettest",
   ROUTER_TITLE: "config",
   name: "meettest",
-  ROUTER_HIDDEN:true,
+  ROUTER_HIDDEN: true,
   ROUTER_ICON: "el-icon-date",
   components: {
     openviduConfig,
@@ -173,8 +174,10 @@ export default {
     localUsersService.initialize()
     openViduWebRTCService.initialize()
     // setting
-    this.ovSettings = this.externalConfig ? this.externalConfig.getOvSettings() : new OvSettingsModel()
-		
+    this.ovSettings = this.externalConfig
+      ? this.externalConfig.getOvSettings()
+      : new OvSettingsModel()
+
     // 代表现在有setting
     this.ovSettings._ovSettings(this.ovSettings)
     this.ovSettings.setScreenSharing(
@@ -204,9 +207,6 @@ export default {
     })
   },
   methods: {
-    removeUser() {
-      // api.removeToken({ sessionName: this.mySessionId, token: this.token })
-    },
     // 检测窗口大小控制聊天框样子
     // checkSizeComponent =》sidenavMode
     /**
@@ -222,7 +222,7 @@ export default {
       console.log("onConfigRoomJoin：加入会议")
       this.hasVideoDevices = oVDevicesService.hasVideoDeviceAvailable()
       this.hasAudioDevices = oVDevicesService.hasAudioDeviceAvailable()
-      this.showConfigRoomCard = false 
+      this.showConfigRoomCard = false
 
       tokenService.initialize(this.ovSettings)
 
@@ -436,7 +436,7 @@ export default {
         if (openViduWebRTCService.isMyOwnConnection(connectionId)) {
           return
         }
-        console.log("用户修改姓名：",event)
+        console.log("用户修改姓名：", event)
         const nickname = utilsSrv.getNicknameFromConnectionData(event.data)
         remoteUsersService.updateNickname(connectionId, nickname)
       })
@@ -467,11 +467,34 @@ export default {
       console.log("改变屏幕", event)
       openViduWebRTCService.replaceScreenTrack()
     },
-    leaveSession() {
+    async removeUser() {
+      // remove
+      const webcamToken = tokenService.getWebcamToken()
+      const screenToken = tokenService.getScreenToken()
+      try {
+        const data = await api.removeMeetToken({
+          sessionName: tokenService.getSessionId(),
+          webcamToken,
+          screenToken,
+        }) 
+        return data
+      } catch (e) {
+        console.warn("removeUser error",e)
+        return {}
+      }
+    },
+    async leaveSession() {
       console.log("Leaving session...")
       // 断开链接 session disconnect and stop stream
       openViduWebRTCService.disconnect()
+      const data = await this.removeUser()
+      console.log("leaveSession", data)
+      const { isSpeech,faces } = data
       // 回页面
+      if (isSpeech) {
+        this.$router.push({ name: "echars" })
+        return
+      }
       this.$router.push({ name: "meet" })
     },
     emitPublisher($event) {
@@ -665,7 +688,7 @@ export default {
         console.log(error)
         this.$message(utilsSrv.handlerScreenShareError(error))
       }
-    }
+    },
   },
 }
 </script>

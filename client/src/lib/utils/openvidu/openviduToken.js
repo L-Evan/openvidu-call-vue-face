@@ -44,7 +44,7 @@ class TokenService {
   async generateScreenToken (sessionId) {
     console.log("Generating screen token...")
     this.screenToken = await this.networkSrv.getToken(
-      sessionId    )
+      sessionId)
   }
   async generateWebcamToken (sessionId) {
     console.log("Generating webcam token...")

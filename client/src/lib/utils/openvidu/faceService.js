@@ -1,4 +1,5 @@
 import { localUsersService } from "./openviduMainUser"
+// import {avatarService} from "./avatar"
 // import { tokenService } from "@/lib/utils/openvidu/openviduToken"
 import {
   headCheck,
@@ -39,7 +40,8 @@ class FaceService {
   constructor () {
     this.faces = {}
     this.loadStatuc = false
-    this.setMonitorCheck = false
+    // 是否循环检测
+    this.setMonitorCheck = true
     this.start = false
     this.checkSessionFaces = []
     // 选用模型
@@ -133,6 +135,8 @@ class FaceService {
  
     let faceData = null
     // 开始检测
+    // 裁剪头像 待确定直接图片识别,暂不存到缓存中
+    const capturedAvatar = "" //avatarService.createCaptureByvideo(video)
     const result = await detectSingleFace(video)
       .withFaceLandmarks()
       .withFaceExpressions()
@@ -150,7 +154,7 @@ class FaceService {
       const { expressions } = result
       const faceStr = this.max_Object(expressions)
       const moodData = { faceStr, expressions }
-      faceData = { moodData, eyeData, mouthData, headData }
+      faceData = { moodData, eyeData, mouthData, headData,capturedAvatar }
       // 检测次数
       this.checkCount++
       // 表情次数
