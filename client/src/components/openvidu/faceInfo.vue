@@ -19,25 +19,25 @@
       >
       </el-switch>
     </el-tooltip>
+    <!-- socket --> 
     <!-- <el-button icon="el-icon-view" @click="checkStart"> </el-button> -->
   </div>
 </template>
 
 <script>
+import websocket from "@/lib/utils/openvidu/websocket"
 
-// import { openViduWebRTCService } from "@/lib/utils/openvidu/openviduWrtc"
-import api from "@/api/openvidu/openvidu"
 import { faceService } from "@/lib/utils/openvidu/faceService"
 import { cycleComputer } from "@/utils/openvidu/faceEvaluation"
 import { tokenService } from "@/lib/utils/openvidu/openviduToken"
 export default {
   data() {
     return {
-      sessionName:"",
+      sessionName: "",
       // 识别开启状态
       checkFaceStatus: false,
       currentFaces: [],
-      monitSetTimeContain:null
+      monitSetTimeContain: null,
     }
   },
   created() {
@@ -47,23 +47,38 @@ export default {
     // this.checkStart()
     this.monitSaveFaceToServer()
   },
-  destroyed(){
-    this.monitSetTimeContain && clearInterval(this.monitSetTimeContain)
+  destroyed() {
+    this.monitSetTimeContain && clearTimeout(this.monitSetTimeContain)
+  },
+  props: {
+    initialTokenStatus: Boolean,
+    // isConnectionLost: Boolean,
   },
   methods: {
-    monitSaveFaceToServer(){
+    monitSaveFaceToServer() {
       let i = 0
       const sessionName = tokenService.getSessionId()
       console.log("开始监听数据：", sessionName)
-      
-      const uploadDataFunc = setTimeout.bind(null,async () => {
-        console.log("监听中",i,this.currentFaces.length)
-        if(i < this.currentFaces.length ){
-          console.log("发送数据"+i,sessionName)
-          api.saveFaceData({sessionName,facesData:JSON.stringify(this.currentFaces.slice(i))})
-        }
-        i=this.currentFaces.length
-      }, 1000)
+
+      const uploadDataFunc = setTimeout.bind(
+        null,
+        async () => {
+          console.log("监听中", i, this.currentFaces.length)
+          if (i < this.currentFaces.length) {
+            console.log("发送数据" + i, sessionName)
+            try {
+              websocket.sendDataToServer(
+                "saveFace",JSON.stringify(this.currentFaces.slice(i))
+              )
+              i = this.currentFaces.length
+            } catch (e) {
+              console.log("发送数据失败", e)
+            }
+          }
+          this.monitSetTimeContain = uploadDataFunc()
+        },
+        1000
+      )
       this.monitSetTimeContain = uploadDataFunc()
     },
     checkFaceByTime(cycleTime, monitor = false) {
@@ -76,11 +91,11 @@ export default {
       const oneTimeFun = setTimeout.bind(
         null,
         async () => {
-          if(checkCount++===0){
+          if (checkCount++ === 0) {
             checkStartTime = Date.now()
           }
           const timed = Date.now() - checkStartTime
-          console.log("周期检测时间差："+timed)
+          console.log("周期检测时间差：" + timed)
           // check
           const checkSesstionToken = tokenService.getWebcamToken()
           if (checkSesstionToken !== startSesstionToken) {
@@ -95,7 +110,7 @@ export default {
           }
           const checkPointTime = Date.now()
           const faceData = await faceService.detectFace()
-          console.log("单次检测差："+(Date.now()-checkPointTime))
+          console.log("单次检测差：" + (Date.now() - checkPointTime))
           // const { moodData, eyeData, mouthData, headData } = faceData
           if (faceData) {
             currentFaces.push(faceData)
@@ -108,7 +123,14 @@ export default {
             )
             // 所有数据
             // ,暂不存到缓存中 currentFaces
-            const cycleData = { checkStartTime,checkEndTime:Date.now(),checkCount,focusData, currentFaces, upload: false }
+            const cycleData = {
+              checkStartTime,
+              checkEndTime: Date.now(),
+              checkCount,
+              focusData,
+              currentFaces,
+              upload: false,
+            }
             // 更新到全局
             this.currentFaces.push(cycleData)
             faceService.addFaceVector(startSesstionToken, cycleData)
@@ -116,8 +138,8 @@ export default {
             currentFaces = []
           }
           // 当前页面控制状态 checkFaceStatus
-          if (timed >= cycleTime&&(!monitor||!this.checkFaceStatus)) {
-            if(!monitor){
+          if (timed >= cycleTime && (!monitor || !this.checkFaceStatus)) {
+            if (!monitor) {
               this.checkFaceStatus = false
             }
             faceService.clear()
@@ -136,7 +158,7 @@ export default {
      */
     checkStart() {
       // 当前页面控制
-      if(!this.checkFaceStatus){
+      if (!this.checkFaceStatus) {
         return
       }
       if (faceService.start) {
