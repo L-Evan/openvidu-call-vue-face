@@ -1,3 +1,4 @@
+// 临时改session
 class LocalStroy {
   constructor() {
     this.tokenKey = "accessToken_science"
@@ -5,28 +6,28 @@ class LocalStroy {
     console.log("创建对象")
   }
   getToken() { 
-    return localStorage.getItem(this.tokenKey)
+    return sessionStorage.getItem(this.tokenKey)
   }
   removeToken() {  
     //是否全删 
     console.log("删token")
-    return localStorage.removeItem(this.tokenKey)
+    return sessionStorage.removeItem(this.tokenKey)
   }
   setToken(token) {
     console.log("存",token)
-    return localStorage.setItem(this.tokenKey, token)
+    return sessionStorage.setItem(this.tokenKey, token)
   }
 
   setEntity(entity) {
-    return localStorage.setItem(this.entityKey, JSON.stringify(entity))
+    return sessionStorage.setItem(this.entityKey, JSON.stringify(entity))
   }
   getEntity() {
-    return JSON.parse(localStorage.getItem(this.entityKey))
+    return JSON.parse(sessionStorage.getItem(this.entityKey))
   }
   // 待定 基础不牢
   setStory(key, str) {
     if (str instanceof String && typeof str == "string") {
-      return localStorage.setItem(key, str)
+      return sessionStorage.setItem(key, str)
     }
     return false
   }
