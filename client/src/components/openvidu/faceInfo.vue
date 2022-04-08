@@ -128,8 +128,7 @@ export default {
               checkEndTime: Date.now(),
               checkCount,
               focusData,
-              currentFaces,
-              upload: false,
+              currentFaces
             }
             // 更新到全局
             this.currentFaces.push(cycleData)

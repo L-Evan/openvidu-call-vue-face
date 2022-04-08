@@ -491,10 +491,11 @@ export default {
     
     async leaveSession() {
       console.log("Leaving session...")
+      const sessionId = openViduWebRTCService.getWebcamSession()?.sessionId
       // 断开链接 session disconnect and stop stream
       openViduWebRTCService.disconnect()
       if (websocket.isSpeech) {
-        this.$router.push({ name: "echars" })
+        this.$router.push({ name: "echars",query:{sessionId,sessionName:tokenService.getSessionId()} })
         return
       }
       this.$router.push({ name: "meet" })

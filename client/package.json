@@ -27,6 +27,7 @@
     "face-api.js": "^0.22.2",
     "i": "^0.3.6",
     "jquery": "^3.6.0",
+    "js-base64": "^3.7.2",
     "js-cookie": "^2.2.1",
     "json-server": "^0.16.3",
     "mini-svg-data-uri": "^1.2.3",

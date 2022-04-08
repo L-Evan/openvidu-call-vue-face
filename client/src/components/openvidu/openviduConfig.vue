@@ -270,6 +270,7 @@ export default {
   },
   created() {},
   async mounted() {
+    
     this.setSessionName()
     await devicesService.initDevices()
     console.log("第一次设备初始化完毕", devicesService)

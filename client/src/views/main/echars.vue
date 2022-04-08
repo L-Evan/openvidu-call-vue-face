@@ -116,7 +116,7 @@ export default {
             type: "value",
             scale: true,
             name: "Price",
-            max: 200,
+            max: 100,
             min: 0,
             // 线条粗熙
             boundaryGap: [0.2, 0.2],
@@ -148,6 +148,9 @@ export default {
       // data:[],
       //
       // data2:[],
+      sessionName: "",
+      sessionId: "",
+      setTimeoutContainer: null,
     }
   },
   watch: {
@@ -156,27 +159,33 @@ export default {
         console.log(newVal)
         const x_categories = []
         const series = []
+        let minn = 30
+        let maxx = 80
         for (const userKey in newVal) {
           const userData = { type: "line" }
           userData.name = userKey
           // checkStartTime
           // Array.prototype.map
           userData.data = newVal[userKey].map(
-            (userData) =>
-              Math.floor(userData?.focusData?.result.toFixed(4) * 10000) /
+            (userData) =>{
+              const zzd = Math.floor(userData?.focusData?.result.toFixed(4) * 10000) /
                 100 ?? 0
+              maxx = Math.max(zzd,maxx)
+              minn = Math.min(zzd,minn)
+              return
+            }
           )
           // 临时X
           x_categories.push(
             ...newVal[userKey].map((userData) =>
-              parseTime(userData.checkStartTime ?? 0, "{h}:{i}:{s}")
+              parseTime(userData.checkStartTime/5000*5000 ?? 0, "{h}:{i}:{s}")
             )
           )
           // USER
           series.push(userData)
-          console.log("数据：", userData, "x", x_categories)
+          console.log(`用户${userKey}数据：`, userData , "x:", x_categories)
         }
-
+        console.log(`x轴确定 ${x_categories} `)
         this.newOption.series = series
         this.newOption.xAxis[0].data = x_categories
 
@@ -186,9 +195,18 @@ export default {
     },
   },
   mounted() {
-    this.getData()
+    this.initData()
+    this.getFaceData()
+  },
+  destroyed() {
+    clearTimeout(this.setTimeoutContainer)
+    console.log("destroyed")
   },
   methods: {
+    initData() {
+      this.sessionName = this.$route.query.sessionName
+      this.sessionId = this.$route.query.sessionId
+    },
     showFaceInfo(params) {
       console.log("试试看数据", params)
       if (params.componentType == "series" && params.seriesType == "line") {
@@ -205,6 +223,33 @@ export default {
         //         }
         //     }
         // });
+      }
+    },
+    async getFaceData() {
+      try {
+        const result = await api.getMeetFaces({
+          sessionId: this.sessionId,
+          sessionName: this.sessionName,
+        })
+        console.log("获得数据", result)
+        let { usersFace } = result
+        usersFace = JSON.parse(usersFace)
+        for (const userKey in usersFace) {
+          if (usersFace[userKey]?.length) {
+            // faces.formatter
+            // Array.prototype.forEach
+            const converFaces = []
+            usersFace[userKey].forEach((value) => {
+              const checkArrays = JSON.parse(value)
+              converFaces.push(...checkArrays)
+            })
+            usersFace[userKey] = converFaces
+          }
+        }
+        this.testFaceChecks = usersFace
+      } catch (e) {
+        console.log(e, "获取数据失败")
+        this.setTimeoutContainer = setTimeout(this.getFaceData, 3000)
       }
     },
     async getData() {
