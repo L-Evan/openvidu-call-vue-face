@@ -1,12 +1,13 @@
 <template>
   <div>
     <login
+      ref="login"
       @login="login($event)"
       @register="register($event)"
       @change="changePassWrod($event)"
       style="vertical-align: middle; height: 100vh"
     >
-        <!-- 解决svg无法双向绑定问题 -->
+      <!-- 解决svg无法双向绑定问题 -->
       <svg viewBox="0 14 320 300">
         <defs>
           <linearGradient
@@ -43,12 +44,14 @@ export default {
     return {
       // 错误信息
       msg: "",
-      disabled: true
+      disabled: true,
     }
   },
   created() {},
   methods: {
-    async changePassWrod(V){console.log("改密码",V)},
+    async changePassWrod(V) {
+      console.log("改密码", V)
+    },
     async register(data) {
       console.log("注册：", this.user)
       await Api.register(data)
@@ -56,7 +59,7 @@ export default {
         message: "恭喜你，注册成功！",
         type: "success",
       })
-      this.changeLable()
+      this.changeLableTologin()
     },
     async login(data) {
       const res = await Api.login(data)
@@ -81,8 +84,9 @@ export default {
         this.disabled = true //不可以点击按钮提交信息
       }
     },
-    changeLable() {
-      document.querySelector(".content").classList.toggle("s--signup")
+    changeLableTologin() {
+      // 返回登陆
+      this.$refs["login"].animecomplemt(0)
     },
   },
   ROUTER_NAME: "login",
