@@ -12,8 +12,8 @@ class OpenViduWebrtcService {
     // this.localUsersSrv.setWebcamPublisher(publisher);
     // Publisher 流第一次开始播放
     publisher.once("streamPlaying", () => {
-      // 还不太理解  媒体播放后删除class？比如吧黑屏关掉？
-      console.log("streamPlaying remove custom-class?")
+      // 还不太理解,媒体播放后删除class？比如吧黑屏关掉？
+      console.log("streamPlaying remove custom-class")
       publisher.videos[0].video.parentElement.classList.remove("custom-class")
     })
     return publisher
@@ -130,7 +130,7 @@ class OpenViduWebrtcService {
   }
   // 新连接才可以使用
   getClientConnectionJson () {
-    console.log("此时来的名字",this.webcamSession.connection.data)
+    console.log("此时来的名字",this.webcamSession?.connection?.data)
     return this.webcamSession.connection.data?.split("%/%")[0]
   }
 

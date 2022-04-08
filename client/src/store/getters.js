@@ -6,6 +6,7 @@ const getters = {
   remoteUserNameList: state => state.openvidu.remoteUserNameList,
   screenShareState: state => state.openvidu.screenShareState,
   webcamVideoActive: state => state.openvidu.webcamVideoActive,
+  websocketStatus: state => state.openvidu.websocketStatus,
   
   ovSettings: state => state.openvidu.ovSettings,
   //MESSAGE

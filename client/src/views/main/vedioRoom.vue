@@ -4,6 +4,7 @@
   <el-container style="height: 100%" id="videoRoomNavBar">
     <el-header v-show="joinedVidioRoom"
       ><openvidu-controler v-if="joinedVidioRoom"
+        :initialTokenStatus ="initialTokenStatus"
         @camButtonClicked="toggleCam"
         @micButtonClicked="toggleMic"
         @screenShareClicked="toggleScreenShare"
@@ -91,6 +92,7 @@
 </template>
 
 <script>
+import websocket from "@/lib/utils/openvidu/websocket"
 import vedioStream from "@/components/openvidu/openviduStream"
 // import UserVideo from "@/components/openvidu/UserVideo"
 import { faceService } from "@/lib/utils/openvidu/faceService"
@@ -116,7 +118,6 @@ import { devicesService as oVDevicesService } from "@/lib/utils/openvidu/device"
 import openviduConfig from "@/components/openvidu/openviduConfig"
 import chat from "@/components/openvidu/openviduChat"
 import CommonPage from "@/lib/utils/mixin/CommonPage"
-import api from "@/api/openvidu/openvidu"
 export default {
   mixins: [CommonPage],
   ROUTER_NAME: "meettest",
@@ -130,9 +131,20 @@ export default {
     openviduControler,
     vedioStream,
   },
-
+  watch: {
+    websocketStatus(value) {
+      if (this.initialTokenStatus && !value) {
+        this.leaveSession()
+      }
+    },
+  },
   computed: {
-    ...mapGetters(["localUsers", "toggleChat", "remoteUsers"]),
+    ...mapGetters([
+      "localUsers",
+      "toggleChat",
+      "remoteUsers",
+      "websocketStatus",
+    ]),
     joinedVidioRoom() {
       return (
         this.localUsers &&
@@ -160,6 +172,7 @@ export default {
       // 设备是否拥有
       hasVideoDevices: true,
       hasAudioDevices: true,
+      initialTokenStatus: false,
     }
   },
   // 父beforeCreate-> 父create -> 子beforeCreate-> 子created -> 子mounted -> 父mounted
@@ -205,6 +218,7 @@ export default {
     this.removeEmit.forEach((item) => {
       window.removeEventListener(item.type, item.fun, false)
     })
+    websocket.wsDestroy()
   },
   methods: {
     // 检测窗口大小控制聊天框样子
@@ -275,7 +289,9 @@ export default {
     async connectToSession() {
       //1.  获取token Initialize tokens from externalConfig or create new ones
       await tokenService.initTokens(this.externalConfig)
-
+      // websocket
+      websocket.start()
+      this.initialTokenStatus = true
       if (localUsersService.areBothConnected()) {
         // 2. 链接
         await this.connectWebcamSession()
@@ -349,9 +365,14 @@ export default {
         // utilsSrv.closeDialog()
       })
       this.session.on("sessionDisconnected", (event) => {
-        if (event.reason === "networkDisconnect") {
+        console.warn("本链接断开，" + event?.reason)
+        if (
+          event.reason === "networkDisconnect" ||
+          event.reason === "sessionClosedByServer"
+        ) {
           // utilsSrv.closeDialog()
-          this.leaveSession()
+          console.warn("本链接断开，" + event?.reason)
+          this.leaveSession(event.reason)
         }
       })
     },
@@ -467,31 +488,12 @@ export default {
       console.log("改变屏幕", event)
       openViduWebRTCService.replaceScreenTrack()
     },
-    async removeUser() {
-      // remove
-      const webcamToken = tokenService.getWebcamToken()
-      const screenToken = tokenService.getScreenToken()
-      try {
-        const data = await api.removeMeetToken({
-          sessionName: tokenService.getSessionId(),
-          webcamToken,
-          screenToken,
-        }) 
-        return data
-      } catch (e) {
-        console.warn("removeUser error",e)
-        return {}
-      }
-    },
+    
     async leaveSession() {
       console.log("Leaving session...")
       // 断开链接 session disconnect and stop stream
       openViduWebRTCService.disconnect()
-      const data = await this.removeUser()
-      console.log("leaveSession", data)
-      const { isSpeech,faces } = data
-      // 回页面
-      if (isSpeech) {
+      if (websocket.isSpeech) {
         this.$router.push({ name: "echars" })
         return
       }

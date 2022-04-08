@@ -2,7 +2,7 @@
   <el-row>
     <el-col :span="4">
       <div>
-        <face-info></face-info>
+        <face-info :initialTokenStatus="initialTokenStatus"></face-info>
       </div>
     </el-col>
     <el-col :span="16" fxFlexOrder="2">
@@ -68,7 +68,7 @@
           <el-button
             icon="el-icon-remove"
             style="color: red"
-            @click="$emit('leaveSessionButtonClicked')"
+            @click="leaveSessionButtonClicked"
             v-if="ovSettings"
           >
           </el-button>
@@ -83,13 +83,13 @@
         :disabled="isConnectionLost"
         v-if="ovSettings"
       >
-        <!-- icon chat -->
       </el-button>
     </el-col>
   </el-row>
 </template>
 
 <script>
+import websocket from "@/lib/utils/openvidu/websocket"
 import faceInfo from "@/components/openvidu/faceInfo"
 import { mapGetters } from "vuex"
 import { localUsersService } from "@/lib/utils/openvidu/openviduMainUser"
@@ -99,8 +99,8 @@ import { chatService } from "@/lib/utils/openvidu/openviduWechat"
 import { tokenService } from "@/lib/utils/openvidu/openviduToken"
 import { OvSettingsModel } from "@/lib/utils/openvidu/openviduSetting"
 export default {
-  components:{
-    faceInfo
+  components: {
+    faceInfo,
   },
   data() {
     return {
@@ -118,6 +118,7 @@ export default {
     ...mapGetters(["screenShareState", "webcamVideoActive"]),
   },
   props: {
+    initialTokenStatus: Boolean,
     isConnectionLost: Boolean,
     // lightTheme: Boolean,
     // 貌似预留通知？
@@ -137,6 +138,18 @@ export default {
     // this.isWebcamVideoEnabled = this.webcamVideoActive
   },
   methods: {
+    leaveSessionButtonClicked() {
+      console.log(
+        "退出leaveSessionButtonClicked||",websocket,"||",
+        websocket.isSpeech,
+        websocket.websocketStatus()
+      )
+      if (websocket.isSpeech && websocket.websocketStatus()) {
+        websocket.meetOver()
+        return
+      }
+      this.$emit("leaveSessionButtonClicked")
+    },
     toggleChat() {
       this.chatService.toggleChat()
     },
@@ -146,7 +159,7 @@ export default {
         this.fullscreenIcon === VideoFullscreenIcon.BIG
           ? VideoFullscreenIcon.NORMAL
           : VideoFullscreenIcon.BIG
-    }
+    },
   },
 }
 </script>

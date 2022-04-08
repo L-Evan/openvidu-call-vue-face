@@ -1,27 +1,32 @@
-
-
-import { openViduLayoutService } from "@/lib/utils/openvidu/layout"// 创建一个新的 store 实例
+import { openViduLayoutService } from "@/lib/utils/openvidu/layout" // 创建一个新的 store 实例
 const getDefaultState = () => {
   return {
-    ovSettings:null,
-    streamManager:null,
-    localUsers:[],
-    remoteUsers:[],
-    remoteUserNameList:[],
-    screenShareState:false,
-    webcamVideoActive: true ,
-    messagesUnread:0,messageList:[],toggleChat:false,
-    
+    websocketStatus: false,
+    ovSettings: null,
+    streamManager: null,
+    localUsers: [],
+    remoteUsers: [],
+    remoteUserNameList: [],
+    screenShareState: false,
+    webcamVideoActive: true,
+    messagesUnread: 0,
+    messageList: [],
+    toggleChat: false
   }
 }
 const state = getDefaultState()
 // 改变属性
 const mutations = {
+  SET_websocketStatus: (state, websocketStatus) => {
+    state.websocketStatus = websocketStatus
+  },
   SET_MessageList: (state, messageList) => {
     state.messageList = messageList
-  }, SET_MessagesUnread: (state, messagesUnread) => {
+  },
+  SET_MessagesUnread: (state, messagesUnread) => {
     state.messagesUnread = messagesUnread
-  }, SET_ToggleChat: (state, toggleChat) => {
+  },
+  SET_ToggleChat: (state, toggleChat) => {
     state.toggleChat = toggleChat
   },
   SET_StreamManager: (state, streamManager) => {
