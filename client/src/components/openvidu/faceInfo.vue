@@ -83,6 +83,8 @@ export default {
     },
     checkFaceByTime(cycleTime, monitor = false) {
       let checkStartTime = null
+      let isCapture = true
+      let captureImage = ""
       let checkCount = 0
       // 会议id
       let startSesstionToken = tokenService.getWebcamToken()
@@ -93,6 +95,7 @@ export default {
         async () => {
           if (checkCount++ === 0) {
             checkStartTime = Date.now()
+            isCapture= true
           }
           const timed = Date.now() - checkStartTime
           console.log("周期检测时间差：" + timed)
@@ -109,10 +112,16 @@ export default {
             return
           }
           const checkPointTime = Date.now()
-          const faceData = await faceService.detectFace()
+          const faceData = await faceService.detectFace(isCapture)
           console.log("单次检测差：" + (Date.now() - checkPointTime))
           // const { moodData, eyeData, mouthData, headData } = faceData
           if (faceData) {
+            if(faceData.capturedAvatar){
+              isCapture=false
+              captureImage = faceData.capturedAvatar
+              // 暂时只传一张图片
+              faceData.capturedAvatar = ""
+            }
             currentFaces.push(faceData)
           }
           if (faceData && timed >= cycleTime) {
@@ -128,7 +137,8 @@ export default {
               checkEndTime: Date.now(),
               checkCount,
               focusData,
-              currentFaces
+              currentFaces,
+              captureImage
             }
             // 更新到全局
             this.currentFaces.push(cycleData)

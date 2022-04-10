@@ -1,6 +1,13 @@
 <template>
   <div>
+    <div>
+      
     <v-chart class="chart" :option="option" />
+     <div class="userImage">
+       <span class="title">用户图片</span>
+        <el-avatar shape="square" :size="100" fit="scale-down" :src="userImage"></el-avatar>
+     </div>
+    </div>
     <v-chart class="chart" :option="newOption" @mouseover="showFaceInfo" />
   </div>
 </template>
@@ -13,14 +20,37 @@ export default {
   ROUTER_ICON: "el-icon-s-help",
   ROUTER_TITLE: "echars",
   ROUTER_NAME: "echars",
+  ROUTER_HIDDEN: true,
   name: "HelloWorld",
   provide: {
     [THEME_KEY]: "dark",
   },
   data() {
     return {
+      // 用户头像
+      userImage:"https://tools.jiyik.com/demo_source/demo2.jpeg",
+      start: 0,
+      end: 0,
+      AverageName: "Average",
+      //请求到后json整理后数据
       testFaceChecks: {},
+      // 点到人脸的数据
+      userPontToFace: {},
+      // 历史 考虑迁移
       meetInfoHistory: {},
+      // 均线展示数据
+      averageData: {
+        expressions: {
+          angry: 0,
+          disgusted: 0,
+          fearful: 0,
+          happy: 0,
+          neutral: 0,
+          surprised: 0,
+          sad: 0,
+        },
+      },
+
       option: {
         title: {
           text: "Traffic Sources",
@@ -36,11 +66,13 @@ export default {
           orient: "vertical",
           left: "left",
           data: [
-            "Direct",
-            "Email",
-            "Ad Networks",
-            "Video Ads",
-            "Search Engines",
+            "angry",
+            "disgusted",
+            "fearful",
+            "happy",
+            "neutral",
+            "surprised",
+            "sad",
           ],
         },
         // 格式按type来  1个东西多个x  一般在一个object
@@ -52,11 +84,13 @@ export default {
             center: ["50%", "60%"],
             // 数据
             data: [
-              { value: 335, name: "Direct" },
-              { value: 310, name: "Email" },
-              { value: 234, name: "Ad Networks" },
-              { value: 135, name: "Video Ads" },
-              { value: 1548, name: "Search Engines" },
+              { value: 0, name: "angry" },
+              { value: 0, name: "disgusted" },
+              { value: 0, name: "fearful" },
+              { value: 0, name: "happy" },
+              { value: 0, name: "neutral" },
+              { value: 0, name: "happy" },
+              { value: 0, name: "neutral" },
             ],
             // 高亮样式
             emphasis: {
@@ -70,6 +104,12 @@ export default {
         ],
       },
       newOption: {
+        grid: {
+          top: "50px",
+          left: "50px",
+          right: "15px",
+          bottom: "50px",
+        },
         title: {
           text: "专注度曲线图",
         },
@@ -141,7 +181,6 @@ export default {
         ],
       },
       // 时间
-      categories: [],
       // 情绪
       categories2: [],
       // 专注度
@@ -153,45 +192,124 @@ export default {
       setTimeoutContainer: null,
     }
   },
-  watch: {
-    testFaceChecks: {
-      handler(newVal) {
-        console.log(newVal)
-        const x_categories = []
-        const series = []
-        let minn = 30
-        let maxx = 80
-        for (const userKey in newVal) {
-          const userData = { type: "line" }
-          userData.name = userKey
-          // checkStartTime
-          // Array.prototype.map
-          userData.data = newVal[userKey].map(
-            (userData) =>{
-              const zzd = Math.floor(userData?.focusData?.result.toFixed(4) * 10000) /
-                100 ?? 0
-              maxx = Math.max(zzd,maxx)
-              minn = Math.min(zzd,minn)
-              return
-            }
-          )
-          // 临时X
-          x_categories.push(
-            ...newVal[userKey].map((userData) =>
-              parseTime(userData.checkStartTime/5000*5000 ?? 0, "{h}:{i}:{s}")
-            )
-          )
-          // USER
-          series.push(userData)
-          console.log(`用户${userKey}数据：`, userData , "x:", x_categories)
-        }
-        console.log(`x轴确定 ${x_categories} `)
-        this.newOption.series = series
-        this.newOption.xAxis[0].data = x_categories
+  computed: {
+    showData() {
+      this.updateBeforInit()
+      console.log("触发了么") // JSON.parse(JSON.stringify(
+      const newVal = this.testFaceChecks
 
-        // this.categories = []
+      console.log(newVal)
+      let minn = 30
+      let maxx = 80
+      let minTime = 164943945669099
+      let maxTime = 0
+      //----------------------------------------------------------------
+      for (const userKey in newVal) {
+        // Array.prototype.map
+        newVal[userKey] = newVal[userKey].map((userData) => {
+          // const clearData = { focusValue: 0 }
+          if (userData?.focusData?.result) {
+            const { checkStartTime, focusData } = userData
+            const { result } = focusData
+            const focusValue = Math.floor(result.toFixed(4) * 10000) / 100
+            // 保存
+            // clearData.focusValue = focusValue
+            // clearData.checkStartTime = parseInt(userData.checkStartTime/ 5000) * 5000
+            userData.focusValue = focusValue
+            userData.checkStartTime =
+              parseInt(userData.checkStartTime / 5000) * 5000
+            // 找时间
+            minTime = Math.min(checkStartTime, minTime)
+            maxTime = Math.max(checkStartTime, maxTime)
+            // 专注度
+            maxx = Math.max(focusValue, maxx)
+            minn = Math.min(focusValue, minn)
+          }
+          return userData
+        })
+      }
+      console.log(`min${minTime},"max${maxTime}`)
+      // return {}
+      //----------------------------------------------------------------
+      let x_categories = []
+      const series = []
+      for (
+        let m = parseInt(minTime / 5000) * 5000;
+        m <= parseInt(maxTime / 5000) * 5000;
+        m += 5000
+      ) {
+        //parseTime(m, "{h}:{i}:{s}")
+        x_categories.push(m)
+      }
+      console.log("x轴确定 ", x_categories)
+      //----------------------------------------------------------------
+      // 计算均值
+      let focusAllValuesAverage = new Array(x_categories.length)
+      const pointNumber = new Array(x_categories.length)
+      // 初始化
+      focusAllValuesAverage.fill(0)
+
+      for (const userKey in newVal) {
+        const userData = { type: "line", connectNulls: true }
+        userData.name = userKey
+        let i = 0
+        const focusValues = new Array(x_categories.length)
+        const preData = newVal[userKey]
+        console.log(userKey + "的数据", preData)
+        x_categories.forEach((time, index) => {
+          if (i < preData.length && preData[i].checkStartTime == time) {
+            // userKey+i 为key
+            this.userPontToFace[userKey + index] = i
+            //
+            const pointData = preData[i++]
+            focusValues[index] = pointData.focusValue
+            // 均
+            focusAllValuesAverage[index] += focusValues[index]
+            pointNumber[index] = pointNumber[index] ? pointNumber[index] + 1 : 1
+            // 二级显示数据(暂时只取第一个)
+            const { currentFaces } = pointData
+            if (currentFaces.length) {
+              // 向前提取
+              const { expressions, faceStr } = currentFaces[0].moodData
+              pointData.expressions = expressions
+              pointData.faceStr = faceStr
+              this.averageData.expressions[faceStr]++
+            }
+          }
+        })
+        userData.data = focusValues
+        // USER
+        series.push(userData)
+        console.log(`用户${userKey}数据：`, userData)
+      }
+      // 平均
+      focusAllValuesAverage = focusAllValuesAverage.map(
+        (value, index) => value / pointNumber[index]
+      )
+      console.log("平均？", focusAllValuesAverage)
+      series.push({
+        type: "line",
+        name: this.AverageName,
+        connectNulls: true,
+        data: focusAllValuesAverage,
+      })
+      // x轴
+      x_categories = x_categories.map((time) => {
+        return parseTime(time, "{h}:{i}:{s}")
+      })
+
+      return {
+        x_categories,
+        series,
+      }
+    },
+  },
+  watch: {
+    showData: {
+      handler(showData) {
+        this.newOption.series = showData.series
+        this.newOption.xAxis[0].data = showData.x_categories
       },
-      // deep: true
     },
   },
   mounted() {
@@ -203,6 +321,20 @@ export default {
     console.log("destroyed")
   },
   methods: {
+    updateBeforInit() {
+      this.averageData = {
+        captureImage: "https://tools.jiyik.com/demo_source/demo2.jpeg",
+        expressions: {
+          angry: 0,
+          disgusted: 0,
+          fearful: 0,
+          happy: 0,
+          neutral: 0,
+          surprised: 0,
+          sad: 0,
+        },
+      }
+    },
     initData() {
       this.sessionName = this.$route.query.sessionName
       this.sessionId = this.$route.query.sessionId
@@ -210,19 +342,26 @@ export default {
     showFaceInfo(params) {
       console.log("试试看数据", params)
       if (params.componentType == "series" && params.seriesType == "line") {
-        var xAxisInfo = params.value[0]
-        // myChart.setOption({
-        //     series: {
-        //         id: 'pie',
-        //         label: {
-        //             formatter: '{b}: {@[' + xAxisInfo + ']} ({d}%)'
-        //         },
-        //         encode: {
-        //             value: xAxisInfo,
-        //             tooltip: xAxisInfo
-        //         }
-        //     }
-        // });
+        // var xAxisInfo = params.value[0]
+        // this.testFaceChecks
+        const { seriesName, dataIndex } = params
+        // id
+        const pointData =
+          seriesName === this.AverageName
+            ? this.averageData
+            : this.testFaceChecks[seriesName][
+              this.userPontToFace[seriesName + dataIndex]
+            ]
+
+        // 显示faceStr
+        const { expressions,captureImage } = pointData
+        this.userImage = captureImage
+        const datas = []
+        for (const str in expressions) {
+          datas.push({ name: str, value: expressions[str] })
+        }
+        this.option.series[0].data = datas
+        console.log("这个点", pointData)
       }
     },
     async getFaceData() {
@@ -233,20 +372,19 @@ export default {
         })
         console.log("获得数据", result)
         let { usersFace } = result
-        usersFace = JSON.parse(usersFace)
-        for (const userKey in usersFace) {
-          if (usersFace[userKey]?.length) {
-            // faces.formatter
-            // Array.prototype.forEach
-            const converFaces = []
-            usersFace[userKey].forEach((value) => {
-              const checkArrays = JSON.parse(value)
-              converFaces.push(...checkArrays)
-            })
-            usersFace[userKey] = converFaces
-          }
-        }
-        this.testFaceChecks = usersFace
+        const userMap = {}
+        usersFace.forEach((userData) => {
+          const userKey = userData.createdBy
+          const converFaces = []
+          const checkArrays = JSON.parse(userData.facesData)
+          checkArrays.forEach((value) => {
+            const checkArrays = JSON.parse(value)
+            converFaces.push(...checkArrays)
+          })
+          userMap[userKey] = converFaces
+        })
+        console.log("保存的数据", userMap)
+        this.testFaceChecks = userMap
       } catch (e) {
         console.log(e, "获取数据失败")
         this.setTimeoutContainer = setTimeout(this.getFaceData, 3000)
@@ -291,5 +429,10 @@ export default {
 <style scoped>
 .chart {
   height: 400px;
+}
+.userImage{
+  position: absolute;
+    top: 75px;
+    right: 143px;
 }
 </style> 

@@ -1,5 +1,5 @@
 import { localUsersService } from "./openviduMainUser"
-// import {avatarService} from "./avatar"
+import { avatarService } from "./avatar"
 // import { tokenService } from "@/lib/utils/openvidu/openviduToken"
 import {
   headCheck,
@@ -45,7 +45,7 @@ class FaceService {
     this.start = false
     this.checkSessionFaces = []
     // 选用模型
-    this.selectedFaceDetector = SSD_MOBILENETV1
+    this.selectedFaceDetector = SSD_MOBILENETV1 //TINY_FACE_DETECTOR //
   }
   async initialize () {
     // 判断模型加载
@@ -118,7 +118,7 @@ class FaceService {
     }
   }
   /** @name 人脸检测 */
-  async detectFace () {
+  async detectFace (isCapture) {
     if (!this.start) {
       console.log("检测没有初始化")
       return
@@ -132,15 +132,16 @@ class FaceService {
       console.log("没有检测到视频")
       return
     }
- 
+
     let faceData = null
     // 开始检测
     // 裁剪头像 待确定直接图片识别,暂不存到缓存中
-    const capturedAvatar = "" //avatarService.createCaptureByvideo(video)
+    let capturedAvatar = ""
+    if (isCapture) capturedAvatar = avatarService.createCaptureByvideo(video)
     const result = await detectSingleFace(video)
       .withFaceLandmarks()
       .withFaceExpressions()
-    
+
     if (result) {
       console.log("检测到")
       this.checkCount++
@@ -154,14 +155,14 @@ class FaceService {
       const { expressions } = result
       const faceStr = this.max_Object(expressions)
       const moodData = { faceStr, expressions }
-      faceData = { moodData, eyeData, mouthData, headData,capturedAvatar }
+      faceData = { moodData, eyeData, mouthData, headData, capturedAvatar }
       // 检测次数
       this.checkCount++
       // 表情次数
       this.emojiCount[faceStr]++
     }
     console.log("检测结果:", result)
-    return faceData 
+    return faceData
   }
   clear () {
     this.start = false

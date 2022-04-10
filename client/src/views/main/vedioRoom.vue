@@ -371,7 +371,7 @@ export default {
           event.reason === "sessionClosedByServer"
         ) {
           // utilsSrv.closeDialog()
-          console.warn("本链接断开，" + event?.reason)
+          console.warn("本链接断开!" + event?.reason)
           this.leaveSession(event.reason)
         }
       })
