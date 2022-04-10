@@ -212,7 +212,6 @@ export default {
     remoteUsersService.clear()
     oVLayout.clear()
     localUsersService.clear()
-    faceService.clear()
     this.session = null
     this.sessionScreen = null
     this.removeEmit.forEach((item) => {

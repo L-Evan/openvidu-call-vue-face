@@ -1,7 +1,5 @@
 import { estimatePose } from "./head-pose"
-
 import { pow2 } from "./my_math"
-
 // 暂时以人闭嘴为0.3判断
 const mouthBase = 0.3
 // 表情
@@ -10,13 +8,11 @@ const faceMoodPowers = [
   0.059785,
   0.027026,
   0.039953,
-  0.368842,
+  0.368842, // max
   0.059785,
   0.260724,
   0.183885
 ]
-const fatigueValues = [1, 0.8, 0.5]
-
 const moodType = {
   angry: 0,
   disgusted: 1,
@@ -26,6 +22,15 @@ const moodType = {
   surprised: 5,
   neutral: 6
 }
+// , 0.8
+// 试试看去掉m2
+const fatigueValues = [1, 0.5]
+// 估计最大值
+const maxExpressScore =
+  faceMoodPowers.reduce((acc, cur) => (acc < cur ? cur : acc), 0) * 5
+const maxFatigue = fatigueValues.reduce((acc, cur) => acc + cur, 0)
+const maxyaw = 70
+const maxpitch = 60
 /**
  * 头部检测
  */
@@ -40,26 +45,31 @@ export async function headCheck (result) {
   // yaw 左右
   // pitch 上下
   // roll 旋转
-  const { pitch, yaw, roll } = await estimatePose(
+  let { pitch, yaw, roll } = await estimatePose(
     result.landmarks._positions,
     result.detection.imageWidth,
     result.detection.imageHeight
   )
-  console.log({ pitch, yaw, roll })
-  const k1 = Math.abs(yaw * 100) > 70 ? 0 : 1 - Math.abs(yaw * 100) / 70
-  const k2 = Math.abs(pitch * 100) > 60 ? 0 : 1 - Math.abs(pitch * 100) / 60
-
-  if (!k1 || !k2) {
-    console.log("有角度过大", k1 + "_" + k2)
-  }
-  const headTurnDegrees = [k1, k2]
-  return { headTurnDegree: Math.min(k1, k2), headTurnDegrees, pitch, yaw, roll }
+  yaw = Math.abs(yaw * 100) 
+  pitch = Math.abs(pitch * 100) 
+  // if (!k1 || !k2) {
+  //   console.log("有角度过大", k1 + "_" + k2)
+  // }
+  // console.log({ pitch, yaw, roll })
+  yaw = yaw > maxyaw ? maxyaw : yaw 
+  pitch = pitch > maxpitch ? maxpitch : pitch 
+  // computerProportion(Math.abs(pitch * 100), maxpitch)
+  // headTurnDegree: Math.min(yaw, pitch),
+  return {  pitch, yaw, roll }
 }
 function headCalculation (headTurns) {
-  return (
-    (headTurns.reduce((acc, cur) => acc + cur, 0) / headTurns.length) *
-    mainPowers[0]
-  )
+  const pysums = headTurns.reduce((last, now) => ({pitch:now.pitch+last.pitch,yaw: now.yaw+ last.yaw}), {pitch:0, yaw:0})
+  const k1 = computerProportion(pysums.pitch/headTurns.length, maxpitch)
+  const k2 = computerProportion(pysums.yaw/headTurns.length, maxyaw)
+  return Math.min(k1,k2)*mainPowers[0]
+}
+function computerProportion (value, maxvalue) {
+  return 1 - value / maxvalue
 }
 // 情绪识别相关
 function fatigueCalculation (
@@ -77,24 +87,27 @@ function fatigueCalculation (
   console.log(
     `m1:${m1},m2:${m2},m3:${m3},closeEysCount:${closeEysCount},openMouthCount:${openMouthCount},checkTime:${checkTime}`
   )
-  //(m1 + 0.8 * m2 + 0.5 * m3) * mainPowers[1]
-  return (
-    1 -
-    ([m1, m2, m3]
+  //(m1 + 0.8 * m2 + 0.5 * m3) * mainPowers[1] m2,
+  const p = computerProportion(
+    [m1,  m3]
       .filter((value, index) => value * fatigueValues[index])
-      .reduce((acc, cur) => acc + cur, 0) *
-      mainPowers[1]) /
-      2.3
+      .reduce((acc, cur) => acc + cur, 0),
+    maxFatigue
   )
+  return p * mainPowers[1]
 }
 function moodCalculation (moodCounts) {
   moodCounts.forEach((value, index) => {
     moodCounts[index] = value * faceMoodPowers[index]
   })
-  return moodCounts.reduce((acc, cur) => acc + cur, 0) * mainPowers[2]
+  return computerProportion(
+    moodCounts.reduce((acc, cur) => acc + cur, 0),
+    maxExpressScore
+  ) * mainPowers[2]
 }
 
 export function cycleComputer (faces, checkTime = 5) {
+  console.trace()
   const closeEysCount = faces.filter(face => face.eyeData.eyesClosed).length
   const openMouthCount = faces.filter(face => face.mouthData.mouthOpen).length
   // 68
@@ -105,7 +118,7 @@ export function cycleComputer (faces, checkTime = 5) {
     checkTime
   )
   // 头部
-  const headTurns = faces.map(face => face.headData.headTurnDegree)
+  const headTurns = faces.map(face => face.headData)
   const headTurnDegree = headCalculation(headTurns)
   const moodCounts = [0, 0, 0, 0, 0, 0, 0]
   // 情绪
@@ -155,7 +168,7 @@ export function eyeStatusCheck (face68_) {
     console.log("眼睛微闭状态", R)
   }
   // 22建议
-  return { eyeR: R, eyesClosed: R <= 0.28 }
+  return { eyeR: R, eyesClosed: R <= 0.22 }
 }
 /**
  * 嘴巴合闭检测

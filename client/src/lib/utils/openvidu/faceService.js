@@ -165,6 +165,7 @@ class FaceService {
     return faceData
   }
   clear () {
+    console.log("检测清理？？？")
     this.start = false
     clearTimeout(this.setTimeoutContainer)
     this.setTimeoutContainer = null
