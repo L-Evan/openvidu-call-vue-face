@@ -94,7 +94,7 @@ export default {
 }
 </script> 
 
-  <style>
+<style scoped>
 svg {
   position: absolute;
   width: 320px;
