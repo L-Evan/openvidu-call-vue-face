@@ -1,11 +1,11 @@
 <template>
   <el-row>
-    <el-col :span="4">
+    <el-col :span="8">
       <div>
         <face-info :initialTokenStatus="initialTokenStatus"></face-info>
       </div>
     </el-col>
-    <el-col :span="16" fxFlexOrder="2">
+    <el-col :span="8" fxFlexOrder="2">
       <div align="center" class="buttonsContainer">
         <el-button-group>
           <el-button
@@ -75,7 +75,7 @@
         </el-button-group>
       </div>
     </el-col>
-    <el-col :span="4">
+    <el-col :span="8">
       <el-button
         style="position: absolute; right: 0"
         icon="el-icon-chat-line-square"
