@@ -19,26 +19,6 @@
                   value="刷新"
                   @click="getAllUser"
                 />
-                <!-- onclick="window.location.href"
-                    ="updateuser.jsp" -->
-                <!-- <input
-                  type="button"
-                  class="layui-btn dw-dailog"
-                  dw-url="updateuser.jsp"
-                  value="修改信息"
-                  dwidth="100%"
-                  height="100%"
-                /> -->
-                <!-- onclick="window.location.href"
-                    ="deleteUser.jsp" -->
-                <!-- <input
-                  type="button"
-                  class="layui-btn dw-dailog"
-                  dw-url="deleteUser.jsp"
-                  value="删除用户"
-                  dwidth="100%"
-                  height="100%"
-                /> -->
               </div>
             </div>
           </form>
@@ -49,11 +29,7 @@
                 <th style="text-align: center">用户ID</th>
                 <th style="text-align: center">学工号</th>
                 <th style="text-align: center">用户名</th>
-                <th style="text-align: center">入职/年级</th>
-                <th style="text-align: center">所属学院</th>
-                <th style="text-align: center">联系电话</th>
                 <th style="text-align: center">角色名</th>
-
                 <th style="text-align: center">操作</th>
               </tr>
             </thead>
@@ -62,9 +38,6 @@
                 <td align="center" name="aID" id="aID">{{ u.id }}</td>
                 <td align="center">{{ u.userId }}</td>
                 <td align="center">{{ u.userName }}</td>
-                <td align="center">{{ u.aClass }}</td>
-                <td align="center">{{ u.aFaculty }}</td>
-                <td align="center">{{ u.aTel }}</td>
                 <td align="center">{{ u.roleRemarks }}</td>
                 <td class="text-center">
                   <div class="layui-btn-group">
@@ -102,15 +75,6 @@
           <el-form-item label="姓名" :label-width="formLabelWidth">
             <el-input v-model="updateData.userName" autocomplete="off"></el-input>
           </el-form-item>
-          <el-form-item label="学院" :label-width="formLabelWidth">
-            <el-input v-model="updateData.aFaculty" autocomplete="off"></el-input>
-          </el-form-item>
-          <el-form-item label="专业/职称" :label-width="formLabelWidth">
-            <el-input v-model="updateData.aClass" autocomplete="off"></el-input>
-          </el-form-item>
-          <!-- <el-form-item label="头像" :label-width="formLabelWidth">
-            <el-input v-model="updateData.avatar" autocomplete="off"></el-input>
-          </el-form-item> -->
           <el-form-item label="角色" :label-width="formLabelWidth">
             
             <el-select :disabled="$store.getters.roles[0]!='admin'" v-model="updateData.roleId" placeholder="请选择角色"> 
@@ -149,8 +113,6 @@ export default {
       updateData: {
         userId: "",
         userName: "",
-        aClass: "",
-        aFaculty: "",
         avatar: "",
         roleId:"",
         roleRemarks:""
