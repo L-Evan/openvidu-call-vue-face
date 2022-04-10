@@ -68,7 +68,7 @@ export default {
         message: "恭喜你，登录成功！",
         type: "success",
       })
-      this.goPage("kb")
+      this.goPage("meet")
     },
     checkTel() {
       var mytel = this.user.atel

@@ -36,7 +36,6 @@
 <script>
 import Api from "@/api/message/message";
 import message from "@/api/message/message";
-// import Api from "@/api/kb"
 export default {
   ROUTER_ICON: "el-icon-s-help",
   ROUTER_TITLE: "消息通知",
