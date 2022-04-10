@@ -48,9 +48,9 @@ export async function headCheck (result) {
   console.log({ pitch, yaw, roll })
   const k1 = Math.abs(yaw * 100) > 70 ? 0 : 1 - Math.abs(yaw * 100) / 70
   const k2 = Math.abs(pitch * 100) > 60 ? 0 : 1 - Math.abs(pitch * 100) / 60
-   
-  if(!k1||!k2){
-    console.log("有角度过大",k1+"_"+k2)
+
+  if (!k1 || !k2) {
+    console.log("有角度过大", k1 + "_" + k2)
   }
   const headTurnDegrees = [k1, k2]
   return { headTurnDegree: Math.min(k1, k2), headTurnDegrees, pitch, yaw, roll }
@@ -68,17 +68,23 @@ function fatigueCalculation (
   chectCount = 5,
   checkTime = 5
 ) {
-  // PERCLOS值
+  // PERCLOS值 max 1
   const m1 = closeEysCount / chectCount
-  // 平均闭眼
-  const m2 = closeEysCount?checkTime / closeEysCount:0
-  // 打哈切频率
+  // 平均闭眼时间 max 1
+  const m2 = closeEysCount ? checkTime / closeEysCount : 1
+  // 打哈切频率 max 1
   const m3 = openMouthCount / chectCount
+  console.log(
+    `m1:${m1},m2:${m2},m3:${m3},closeEysCount:${closeEysCount},openMouthCount:${openMouthCount},checkTime:${checkTime}`
+  )
   //(m1 + 0.8 * m2 + 0.5 * m3) * mainPowers[1]
   return (
-    [m1, m2, m3]
+    1 -
+    ([m1, m2, m3]
       .filter((value, index) => value * fatigueValues[index])
-      .reduce((acc, cur) => acc + cur, 0) * mainPowers[1]
+      .reduce((acc, cur) => acc + cur, 0) *
+      mainPowers[1]) /
+      2.3
   )
 }
 function moodCalculation (moodCounts) {
@@ -88,7 +94,7 @@ function moodCalculation (moodCounts) {
   return moodCounts.reduce((acc, cur) => acc + cur, 0) * mainPowers[2]
 }
 
-export function cycleComputer (faces, checkTime = 5) { 
+export function cycleComputer (faces, checkTime = 5) {
   const closeEysCount = faces.filter(face => face.eyeData.eyesClosed).length
   const openMouthCount = faces.filter(face => face.mouthData.mouthOpen).length
   // 68
@@ -103,12 +109,10 @@ export function cycleComputer (faces, checkTime = 5) {
   const headTurnDegree = headCalculation(headTurns)
   const moodCounts = [0, 0, 0, 0, 0, 0, 0]
   // 情绪
-  faces.forEach(
-    face => void moodCounts[moodType[face.moodData.faceStr]]++
-  )
+  faces.forEach(face => void moodCounts[moodType[face.moodData.faceStr]]++)
   const mood = moodCalculation(moodCounts)
   const result = headTurnDegree + fatigue + mood
-  return {fatigue, headTurnDegree, mood, result}
+  return { fatigue, headTurnDegree, mood, result }
 }
 
 /**
@@ -146,11 +150,12 @@ export function eyeStatusCheck (face68_) {
   if (R >= 0.28) {
     // console.log("眼睛正常状态")
   } else if (R <= 0.22) {
-    console.log("眼睛关闭状态")
+    console.log("眼睛关闭状态", R)
   } else {
-    // console.log("眼睛微闭状态")
+    console.log("眼睛微闭状态", R)
   }
-  return { eyeR: R, eyesClosed: R <= 0.22 }
+  // 22建议
+  return { eyeR: R, eyesClosed: R <= 0.28 }
 }
 /**
  * 嘴巴合闭检测
@@ -170,13 +175,14 @@ export function mouthStatusCheck (face68_) {
   )
   // 当嘴巴闭合时,闭合度为０
   const R = ((1 / 2) * (t1 + t2)) / t3 - mouthBase
-  // console.log("闭嘴程度" + R)
+  console.log("闭嘴程度" + R)
   if (R <= 0.05) {
     // console.log("嘴巴正常状态")
   } else if (R >= 0.17) {
-    // console.log("打哈欠") // 说话打哈欠建议0.3 说话可以由音频识别
+    console.log("打哈欠", R) // 说话打哈欠建议0.3 说话可以由音频识别
   } else {
-    // console.log("嘴巴微开状态")
+    console.log("嘴巴微开状态", R)
   }
-  return { mouthR: R, mouthOpen: R >= 0.17 }
+  // 17
+  return { mouthR: R, mouthOpen: R >= 0.08 }
 }
