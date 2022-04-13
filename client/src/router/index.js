@@ -100,18 +100,18 @@ const userLayRouter = {
   }
 }
 // 维修
-const dutyLayRouter = {
-  hidden: false,
-  path: "/duty",
-  redirect: "/main/duty/rota",
-  component: Layout,
-  children: dutyChildren,
-  meta: {
-    icon: "el-icon-alarm-clock",
-    role: ["admin"],
-    title: "值班管理"
-  }
-}
+// const dutyLayRouter = {
+//   hidden: false,
+//   path: "/duty",
+//   redirect: "/main/duty/rota",
+//   component: Layout,
+//   children: dutyChildren,
+//   meta: {
+//     icon: "el-icon-alarm-clock",
+//     role: ["admin"],
+//     title: "值班管理"
+//   }
+// }
 
 // constantRoutes.push(userLayRouter)
 
@@ -135,5 +135,5 @@ export function resetRouter () {
 }
 
 //异步挂载的路由
-//动态需要根据权限加载的路由表
-export const asyncRouterMap = [userLayRouter, dutyLayRouter]
+//动态需要根据权限加载的路由表 , dutyLayRouter
+export const asyncRouterMap = [userLayRouter]
