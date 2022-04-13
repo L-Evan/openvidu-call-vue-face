@@ -211,7 +211,7 @@ export default {
             // 页面显示数据监听
             this.faceData.focusData = focusData.result * 100
             // 功能提醒
-            if (this.showFocusLow && this.faceData.focusData < 30) {
+            if (this.showFocusLow && this.faceData.focusData < 55) {
               this.$notify({
                 title: "提醒",
                 message: "加油!坚持就是胜利！",

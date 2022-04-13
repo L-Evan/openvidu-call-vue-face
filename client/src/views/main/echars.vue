@@ -1,14 +1,19 @@
 <template>
   <div>
-    <div>
-      
-    <v-chart class="chart" :option="option" />
-     <div class="userImage">
-       <span class="title">用户图片</span>
-        <el-avatar shape="square" :size="100" fit="scale-down" :src="userImage"></el-avatar>
-     </div>
-    </div>
-    <v-chart class="chart" :option="newOption" @mouseover="showFaceInfo" />
+    <div style="height: 400px">
+      <!-- width="100%" height="100%" -->
+      <v-chart class="chart" :option="option" />
+      <div class="userImage">
+        <span class="title">用户图片</span>
+        <el-avatar
+          shape="square"
+          :size="100"
+          fit="scale-down"
+          :src="userImage"
+        ></el-avatar>
+      </div>
+    </div>  <v-chart style="height:calc(100% - 450px)"  class="chart" :option="newOption" @mouseover="showFaceInfo" />
+     
   </div>
 </template>
 
@@ -28,7 +33,7 @@ export default {
   data() {
     return {
       // 用户头像
-      userImage:"https://tools.jiyik.com/demo_source/demo2.jpeg",
+      userImage: "https://tools.jiyik.com/demo_source/demo2.jpeg",
       start: 0,
       end: 0,
       AverageName: "Average",
@@ -53,7 +58,7 @@ export default {
 
       option: {
         title: {
-          text: "Traffic Sources",
+          text: "会议信息",
           left: "center",
         },
         tooltip: {
@@ -107,7 +112,7 @@ export default {
         grid: {
           top: "50px",
           left: "50px",
-          right: "15px",
+          right: "50px",
           bottom: "50px",
         },
         title: {
@@ -297,7 +302,6 @@ export default {
       x_categories = x_categories.map((time) => {
         return parseTime(time, "{h}:{i}:{s}")
       })
-
       return {
         x_categories,
         series,
@@ -321,6 +325,9 @@ export default {
     console.log("destroyed")
   },
   methods: {
+    /**
+     * 初始化属性
+     */
     updateBeforInit() {
       this.averageData = {
         captureImage: "https://tools.jiyik.com/demo_source/demo2.jpeg",
@@ -354,12 +361,13 @@ export default {
             ]
 
         // 显示faceStr
-        const { expressions,captureImage } = pointData
+        const { expressions, captureImage } = pointData
         this.userImage = captureImage
         const datas = []
         for (const str in expressions) {
           datas.push({ name: str, value: expressions[str] })
         }
+        this.option.title.text=seriesName
         this.option.series[0].data = datas
         console.log("这个点", pointData)
       }
@@ -371,7 +379,16 @@ export default {
           sessionName: this.sessionName,
         })
         console.log("获得数据", result)
-        let { usersFace } = result
+        let { usersFace, havaData } = result
+        if (!havaData) {
+          this.$alert("没有采集到数据", "会议信息", {
+            confirmButtonText: "确定",
+            callback: (action) => {
+              this.$router.go(-1)
+            },
+          })
+          return
+        }
         const userMap = {}
         usersFace.forEach((userData) => {
           const userKey = userData.createdBy
@@ -390,38 +407,6 @@ export default {
         this.setTimeoutContainer = setTimeout(this.getFaceData, 3000)
       }
     },
-    async getData() {
-      const result = await api.getHistory()
-      const meetInfoHistory = result?.data?.meetInfoHistory
-      if (meetInfoHistory?.length) {
-        meetInfoHistory.forEach((value) => {
-          try {
-            let usersFace = JSON.parse(value.facesData)
-            for (const userKey in usersFace) {
-              if (usersFace[userKey]?.length) {
-                // faces.formatter
-                // Array.prototype.forEach
-                const converFaces = []
-                usersFace[userKey].forEach((value) => {
-                  const checkArrays = JSON.parse(value)
-                  converFaces.push(...checkArrays)
-                })
-                usersFace[userKey] = converFaces
-              }
-            }
-            value.facesData = usersFace
-            // 随便找个测试
-            this.testFaceChecks = usersFace
-          } catch (e) {
-            console.log("会议转化失败", value)
-          }
-        })
-      }
-      // meetInfoHistor
-      this.meetInfoHistory = meetInfoHistory
-
-      console.log("history", result, meetInfoHistory)
-    },
   },
 }
 </script>
@@ -430,9 +415,9 @@ export default {
 .chart {
   height: 400px;
 }
-.userImage{
+.userImage {
   position: absolute;
-    top: 75px;
-    right: 143px;
+  top: 75px;
+  right: 143px;
 }
 </style> 

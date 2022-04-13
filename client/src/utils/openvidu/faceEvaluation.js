@@ -23,8 +23,7 @@ const moodType = {
   neutral: 6
 }
 // , 0.8
-// 试试看去掉m2
-const fatigueValues = [1, 0.5]
+const fatigueValues = [1, 0.8,0.5]
 // 估计最大值
 const maxExpressScore =
   faceMoodPowers.reduce((acc, cur) => (acc < cur ? cur : acc), 0) * 5
@@ -50,23 +49,26 @@ export async function headCheck (result) {
     result.detection.imageWidth,
     result.detection.imageHeight
   )
-  yaw = Math.abs(yaw * 100) 
-  pitch = Math.abs(pitch * 100) 
+  yaw = Math.abs(yaw * 100)
+  pitch = Math.abs(pitch * 100)
   // if (!k1 || !k2) {
   //   console.log("有角度过大", k1 + "_" + k2)
   // }
   // console.log({ pitch, yaw, roll })
-  yaw = yaw > maxyaw ? maxyaw : yaw 
-  pitch = pitch > maxpitch ? maxpitch : pitch 
+  yaw = yaw > maxyaw ? maxyaw : yaw
+  pitch = pitch > maxpitch ? maxpitch : pitch
   // computerProportion(Math.abs(pitch * 100), maxpitch)
   // headTurnDegree: Math.min(yaw, pitch),
-  return {  pitch, yaw, roll }
+  return { pitch, yaw, roll }
 }
 function headCalculation (headTurns) {
-  const pysums = headTurns.reduce((last, now) => ({pitch:now.pitch+last.pitch,yaw: now.yaw+ last.yaw}), {pitch:0, yaw:0})
-  const k1 = computerProportion(pysums.pitch/headTurns.length, maxpitch)
-  const k2 = computerProportion(pysums.yaw/headTurns.length, maxyaw)
-  return Math.min(k1,k2)*mainPowers[0]
+  const pysums = headTurns.reduce(
+    (last, now) => ({ pitch: now.pitch + last.pitch, yaw: now.yaw + last.yaw }),
+    { pitch: 0, yaw: 0 }
+  )
+  const k1 = computerProportion(pysums.pitch / headTurns.length, maxpitch)
+  const k2 = computerProportion(pysums.yaw / headTurns.length, maxyaw)
+  return Math.min(k1, k2) * mainPowers[0]
 }
 function computerProportion (value, maxvalue) {
   return 1 - value / maxvalue
@@ -81,29 +83,31 @@ function fatigueCalculation (
   // PERCLOS值 max 1
   const m1 = closeEysCount / chectCount
   // 平均闭眼时间 max 1
-  const m2 = closeEysCount ? checkTime / closeEysCount : 1
+  const m2 = (closeEysCount / chectCount) * checkTime // ? checkTime / closeEysCount : 1
   // 打哈切频率 max 1
   const m3 = openMouthCount / chectCount
   console.log(
     `m1:${m1},m2:${m2},m3:${m3},closeEysCount:${closeEysCount},openMouthCount:${openMouthCount},checkTime:${checkTime}`
   )
-  //(m1 + 0.8 * m2 + 0.5 * m3) * mainPowers[1] m2,
+  //(m1 + 0.8 * m2 + 0.5 * m3) * mainPowers[1] m2
   const p = computerProportion(
-    [m1,  m3]
+    [m1,0,m3]
       .filter((value, index) => value * fatigueValues[index])
       .reduce((acc, cur) => acc + cur, 0),
-    maxFatigue
-  )
+    maxFatigue-0.8
+  ) 
   return p * mainPowers[1]
 }
 function moodCalculation (moodCounts) {
   moodCounts.forEach((value, index) => {
     moodCounts[index] = value * faceMoodPowers[index]
   })
-  return computerProportion(
-    moodCounts.reduce((acc, cur) => acc + cur, 0),
-    maxExpressScore
-  ) * mainPowers[2]
+  return (
+    computerProportion(
+      moodCounts.reduce((acc, cur) => acc + cur, 0),
+      maxExpressScore
+    ) * mainPowers[2]
+  )
 }
 
 export function cycleComputer (faces, checkTime = 5) {
@@ -125,7 +129,7 @@ export function cycleComputer (faces, checkTime = 5) {
   faces.forEach(face => void moodCounts[moodType[face.moodData.faceStr]]++)
   const mood = moodCalculation(moodCounts)
   const result = headTurnDegree + fatigue + mood
-  return { fatigue, headTurnDegree, mood, result }
+  return { closeEysCount,openMouthCount,checkTime,len:faces.length,fatigue, headTurnDegree, mood, result }
 }
 
 /**
