@@ -4,6 +4,7 @@ const getToken = (data = {
 } ) => request.post("/api-sessions/get-token", data)
 
 const getHistory = (data ) => request.post("/api-sessions/getHistory", data)
+const deleteMeet = (data ) => request.post("/api-sessions/deleteMeet", data)
 const getMeetFaces = (data ) => request.post("/api-sessions/getMeetFaces", data,false)
 
-export default {getToken,getHistory,getMeetFaces}
+export default {getToken,getHistory,getMeetFaces,deleteMeet}
