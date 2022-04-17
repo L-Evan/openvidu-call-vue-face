@@ -18,7 +18,7 @@
           <!-- 0 登录 1 注册 2忘密 -->
           <div v-if="logintype == 0">
             <label>账号</label>
-            <input
+            <input type="text"
               v-model="itemslogin.userId"
               @focus="focusSubmit(0, '240 1386')"
             />
@@ -30,7 +30,6 @@
               type="password"
               @focus="focusSubmit(-336, '240 1386')"
             />
-
             <div @click="showpassword($event, 'registerp')" class="icondiv">
               <i class="iconfont icon-eye" title="显示密码"></i> 
             </div>
@@ -105,7 +104,7 @@ export default {
       displaytag: false,
       logintype: 0,
       itemslogin: {
-        userId: 13430050201,
+        userId: 13430050201, // 暂时放默认值
         password: 12345678,
       },
       itemsregister: {
@@ -166,7 +165,13 @@ export default {
     },
     /*返回动画*/
     changeloginstatic(type) {
-      console.log("注册")
+      if(type===2){
+        this.$message({
+          message: "请联系系统管理员修改密码",
+          type: "warning"
+        })
+        return
+      }
       //动画和调整
       this.animecomplemt(type)
     },
@@ -238,41 +243,8 @@ form input {
   margin: 10px;
 }
 
-.relative {
-  position: relative;
-  /* width: 25px;
-    height:25px; */
-  /* height: 65px; */
-  top: 0px;
-  left: 0pc;
-  background-color: white;
-}
-.absolute {
-  width: 100px;
-  height: 65px;
-  overflow: hidden;
-  position: absolute;
-  top: 0px;
-  left: 0px;
-}
 
-.t-right-new .text {
-  font-size: 0.5em;
-  line-height: 0.5em;
-  margin: 0;
-}
 
-.t-right-new {
-  position: absolute;
-  width: 167px;
-  height: 19px;
-  background-color: #999;
-  color: white;
-  text-align: center;
-  transform: rotate(-45deg);
-  top: 10px;
-  left: -64px;
-}
 
 .login-bottom-div {
   margin: 0 auto;

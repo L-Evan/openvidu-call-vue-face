@@ -95,7 +95,7 @@ const userLayRouter = {
   children: accountChildren,
   meta: {
     icon: "el-icon-user",
-    role: ["admin"],
+    role: ["admin"], // 需要的角色
     title: "用户管理"
   }
 }

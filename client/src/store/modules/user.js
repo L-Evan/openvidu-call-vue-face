@@ -75,9 +75,8 @@ const actions = {
     return new Promise((resolve, reject) => {
       api.logout(state.token).then(() => { 
         removeToken() // must remove  token  first
-        // 好像登出
+        // 登出重设路由
         resetRouter() 
-        
         console.log("登出")
         commit("RESET_STATE")
         resolve()
