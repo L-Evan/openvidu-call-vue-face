@@ -26,11 +26,14 @@ class DevicesService {
     return this.getMicSelected().device !== newAudioSource
   }
   async initDevices () {
+    // 1. 获取设备列表
     await this.initOpenViduDevices()
     this.devices.length > 0
-      ? console.log("Devices found: ", this.devices)
-      : console.log("No devices found!")
+      ? console.log("找到设备: ", this.devices)
+      : console.log("设备没找到!")
+    // 2. 初始化麦克风和摄像头列表
     this.resetDevicesArray()
+    // 3. 检测是否有麦克风和摄像头
     if (this.hasAudioDeviceAvailable()) {
       this.initAudioDevices()
       this.micSelected = this.getMicSelected()
@@ -47,7 +50,7 @@ class DevicesService {
    */
   async initOpenViduDevices () {
     this.devices = await this.OV.getDevices()
-    console.log("奇怪了", this.devices)
+    console.log("此时设备信息", this.devices)
   }
 
   initAudioDevices () {

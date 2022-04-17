@@ -62,7 +62,7 @@ import api from "@/api/openvidu/openvidu"
 export default {
   ROUTER_NAME: "meet",
   ROUTER_TITLE: "会议记录",
-  ROUTER_ICON: "el-icon-s-help",
+  ROUTER_ICON: "el-icon-s-data",
   name: "history",
   data() {
     return {

@@ -28,8 +28,8 @@ const Storage = {
 
 // -----------
 const VideoSizeIcon = {
-  BIG: "el-icon-zoom-in",
-  NORMAL: "el-icon-zoom-out"
+  BIG: "el-icon-zoom-out" ,
+  NORMAL: "el-icon-zoom-in",
 }
 
 const VideoFullscreenIcon = {

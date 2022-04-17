@@ -8,19 +8,19 @@
         ></el-avatar>
       </el-col>
       <el-col :span="4"
-        ><el-badge :value="faceData.expressCount" class="item">
+        ><el-badge :value="faceData.expressCount" :hidden="faceData.expressCount===0" :max="9" class="item">
           <el-tag>{{ faceData.expressStr | toExpressStr }}</el-tag>
         </el-badge></el-col
       >
       <!-- type="circle" :width="40"  :status="focusStatus" :text-inside="true" format="专注度"   :stroke-width="26" -->
       <el-col :span="10"
         ><el-progress
-          style="margin-top: 10px"
+          style="margin-top: 17px"
           :percentage="faceData.focusData"
         ></el-progress
       ></el-col>
       <el-col :span="6"
-        ><el-tooltip :content="'提醒功能开关: ' + showFocusLow" placement="top">
+        ><el-tooltip  style="margin-top: 13px" :content="'提醒功能开关: ' + showFocusLow" placement="top">
           <el-switch
             v-model="showFocusLow"
             active-color="#13ce66"
@@ -49,7 +49,7 @@
 
 <script>
 import websocket from "@/lib/utils/openvidu/websocket"
-
+import {toFixed} from "@/utils/index"
 import { faceService } from "@/lib/utils/openvidu/faceService"
 import { cycleComputer } from "@/utils/openvidu/faceEvaluation"
 import { tokenService } from "@/lib/utils/openvidu/openviduToken"
@@ -160,6 +160,7 @@ export default {
         null,
         async () => {
           if (checkCount++ === 0) {
+            // 第一次检测清空
             checkStartTime = Date.now()
             isCapture = true
           }
@@ -209,7 +210,7 @@ export default {
               Math.min(parseInt(cycleTime / 1000), currentFaces.length)
             )
             // 页面显示数据监听
-            this.faceData.focusData = focusData.result * 100
+            this.faceData.focusData = toFixed(focusData.result ,4)*100
             // 功能提醒
             if (this.showFocusLow && this.faceData.focusData < 55) {
               this.$notify({

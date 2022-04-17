@@ -123,6 +123,10 @@ class FaceService {
       console.log("检测没有初始化")
       return
     }
+    if(!localUsersService.hasWebcamVideoActive()){
+      console.log("用户没有视频流")
+      return
+    }
     console.log("---------------检测中------------------")
     const videos = localUsersService.getWebcamPublisher().videos
     // room

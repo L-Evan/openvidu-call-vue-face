@@ -21,7 +21,7 @@
           class="message"
           :class="{ right: data.isLocal, left: !data.isLocal }"
         >
-          <img class="user-img" :src="data.userAvatar" />
+          <img class="user-img" :src="data.userAvatar?data.userAvatar:'https://p6-tt.byteimg.com/origin/pgc-image/9a51dfcd968e47a48210af8ec89da7c4?from=pc'" />
           <div class="msg-detail">
             <div class="msg-info">
               <p>{{ data.nickname }}</p>
@@ -68,6 +68,7 @@ export default {
     }
   },
   computed: {
+  
     ...mapGetters(["messageList", "toggleChat"]),
   },
   methods: {

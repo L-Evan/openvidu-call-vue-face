@@ -209,6 +209,7 @@ export default {
     // Reconnecting session is received in Firefox
     // To avoid 'Connection lost' message uses session.off()
     // this.session?.off("reconnecting")
+    chatService.clear()
     remoteUsersService.clear()
     oVLayout.clear()
     localUsersService.clear()
@@ -307,6 +308,7 @@ export default {
         await openViduWebRTCService.publishWebcamPublisher()
       }
       // !Deprecated
+      // 更新页面信息
       // this._joinSession.emit()
       oVLayout.update()
     },
@@ -695,3 +697,9 @@ export default {
 }
 </script>
 <style src="@/styles/openvidu/openviduRoom.css" scoped></style>
+<style scoped>
+ .el-main >>>{
+   overflow: hidden;
+ }
+
+</style>

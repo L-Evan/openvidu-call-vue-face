@@ -87,6 +87,17 @@ class OpenViduWebrtcService {
       // }
     })
   }
+  destroyWebcamPublisher () {
+    const publisher = this.localUsersSrv.getWebcamPublisher()
+    if (publisher) {
+      // publisher.off('streamAudioVolumeChange');
+      if (publisher.stream.getWebRtcPeer()) {
+        publisher.stream.disposeWebRtcPeer()
+      }
+      publisher.stream.disposeMediaStream()
+      this.localUsersSrv.setWebcamPublisher(publisher)
+    }
+  }
   // 音乐移植到屏幕
   publishScreenAudio (active) {
     const publisher = this.localUsersSrv.getScreenPublisher()
@@ -130,7 +141,7 @@ class OpenViduWebrtcService {
   }
   // 新连接才可以使用
   getClientConnectionJson () {
-    console.log("此时来的名字",this.webcamSession?.connection?.data)
+    console.log("此时来的名字", this.webcamSession?.connection?.data)
     return this.webcamSession.connection.data?.split("%/%")[0]
   }
 

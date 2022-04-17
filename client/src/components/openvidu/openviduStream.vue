@@ -64,7 +64,7 @@
         <el-tooltip
           class="item"
           effect="dark"
-          content="Settings"
+          content="设置"
           placement="top-start"
         >
           <!-- @click="toggleVideoMenu($event)" -->
@@ -80,9 +80,9 @@
           >
             <!-- 不同icon -->
             <span v-if="videoSizeIcon === videoSizeIconEnum.NORMAL"
-              >Zoom out</span
+              >放大</span
             >
-            <span v-if="videoSizeIcon === videoSizeIconEnum.BIG">Zoom in</span>
+            <span v-if="videoSizeIcon === videoSizeIconEnum.BIG">放小</span>
           </el-dropdown-item>
           <!-- 控制他人音频播放 不影响左下角 -->
           <el-dropdown-item
@@ -91,8 +91,8 @@
             @click.native="toggleSound()"
             :icon="mutedSound ? 'el-icon-phone' : 'el-icon-phone-outline'"
           >
-            <span v-if="!mutedSound">Mute sound</span>
-            <span v-if="mutedSound">Unmute sound</span>
+            <span v-if="!mutedSound">视频静音</span>
+            <span v-if="mutedSound">取消静音</span>
           </el-dropdown-item>
           <!-- 全屏 -->
           <el-dropdown-item
@@ -102,10 +102,10 @@
             :icon="this.fullscreenIcon"
           >
             <span v-if="fullscreenIcon === videoFullscreenIconEnum.NORMAL"
-              >Exit fullscreen</span
+              >退出全屏</span
             >
             <span v-if="fullscreenIcon === videoFullscreenIconEnum.BIG"
-              >Go to fullscreen</span
+              >视频全屏</span
             >
           </el-dropdown-item>
 
@@ -115,7 +115,7 @@
             id="changeScreenButton"
             v-if="!isRemote && isScreen"
           >
-            <span>Replace screen</span>
+            <span>更换共享</span>
           </el-dropdown-item>
         </el-dropdown-menu>
       </el-dropdown>

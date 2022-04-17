@@ -1,10 +1,10 @@
 #chatContainer {
     position: absolute;
-    z-index: 0;
+    z-index: 100;
     /* 100% */
     width: 400px;
     /* // 20 */
-    height: calc(100% - 122px);
+    height: 787px;
   }
   input {
     font-family: 'Ubuntu', sans-serif;

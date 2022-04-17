@@ -45,6 +45,13 @@ export default {
   },
   methods: {
     handleSessionName() {
+      if(this.form.sessionName.length<6){
+        this.$message({
+          message: "会议号不能少于6位",
+          type: "warning"
+        })
+        return 
+      }
       this.$router.push({
         path: "/openvidu",
         query: { sessionName: this.form.sessionName },
@@ -57,7 +64,7 @@ export default {
 <style>
 .wrapper {
   background: #000000
-    url("https://png.pngtree.com/thumb_back/fw800/background/20190814/pngtree-abstract-color-meteor-fiber-background-image_298614.jpg");
+    url("https://pig-blog-1252563418.cos.ap-chengdu.myqcloud.com/img/blog/6251400d1bcc2dc11708256c7c4d67d.jpg");
 
   background-attachment: fixed;
 

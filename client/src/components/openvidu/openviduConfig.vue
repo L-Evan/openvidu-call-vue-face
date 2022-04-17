@@ -40,13 +40,13 @@
                 v-if="localUser.isCamera() && !hasVideoDevices"
               >
                 <span v-if="!hasVideoDevices && !hasAudioDevices"
-                  >Oops! Camera and microphone are not available</span
+                  >Oops! 摄像机和麦克风不可用</span
                 >
                 <span v-if="!hasVideoDevices && hasAudioDevices"
-                  >Oops! Camera is not available</span
+                  >Oops! 摄像机不可用</span
                 >
                 <span v-if="hasVideoDevices && !hasAudioDevices"
-                  >Oops! Microphone is not available</span
+                  >Oops! 麦克风不可用</span
                 >
               </div>
             </div>
@@ -76,6 +76,7 @@
           <div id="avatarSection">
             <div class="">
               <el-radio
+                @change="changeAvatar"
                 v-model="form.avatarType"
                 :label="AvatarType.CAPTURED"
                 id="avatarContainer"
@@ -187,7 +188,7 @@
 </template>
 
 <script>
-import {mapGetters} from "vuex"
+import { mapGetters } from "vuex"
 import { AvatarType } from "@/lib/utils/openvidu/openviduType"
 import { tokenService } from "@/lib/utils/openvidu/openviduToken"
 import { devicesService } from "@/lib/utils/openvidu/device"
@@ -223,7 +224,7 @@ export default {
       // 是否有
       hasVideoDevices: false,
       hasAudioDevices: false,
-      // 无设备自动直接进入 属于配置属性
+      // 无设备自动直接进入，配置属性
       isAutoPublish: false,
       // 是否使用设备
       isAudioActive: false,
@@ -236,7 +237,7 @@ export default {
       form: {
         nickName: "",
         micSelectedDevice: "",
-        camSelectedDevice: "",
+        camSelectedDevice: null,
         avatarType: AvatarType.DEFAULT,
       },
       rules: {
@@ -259,7 +260,7 @@ export default {
       "devices",
       "screenShareState",
       "webcamVideoActive",
-      "name"
+      "name",
     ]),
     switchAudio() {
       return this.isAudioActive && this.hasAudioDevices
@@ -270,29 +271,24 @@ export default {
   },
   created() {},
   async mounted() {
-    
     this.setSessionName()
     await devicesService.initDevices()
-    console.log("第一次设备初始化完毕", devicesService)
-    // 名字
+    console.log("-------检测并初始化设备完成-------")
     this.form.nickName = this.name
     this.onNicknameUpdate()
+    console.log("-------初始化姓名完成-------")
     this.start()
   },
   methods: {
-    // 父组件调用开始 store.getters
     async start() {
-      // 设备属性同步到此组件
-      console.log("config start", devicesService)
+      console.log("-------授权则显示到组件-------")
       this.setDevicesInfo(devicesService)
       if (this.hasAudioDevices || this.hasVideoDevices) {
+        // 预备初始化发布流，初始化会发起授权
         await this.initwebcamPublisher()
-        console.log("第二次设备初始化完毕", devicesService)
       } else {
         console.log("没有设备")
         // 用户没有设备  作为观察者 Publisher is null
-        // emitPublisher通知上层 多了发布者
-        // Emit publisher to webcomponent and angular-library
         this.emitPublisher(null)
         this.showConfigCard = true
       }
@@ -318,16 +314,20 @@ export default {
       openViduWebRTCService.publishWebcamVideo(false)
       // this.isVideoActive = false
     },
+    changeAvatar() {
+      if (!this.capturedAvatar) {
+        this.$message({
+          message: "请先拍照，否则无效",
+          type: "warning",
+        })
+        return
+      }
+    },
     onNicknameUpdate() {
       localUsersService.updateUsersNickname(this.form.nickName)
       storageSrv.set(Storage.USER_NICKNAME, this.form.nickName)
     },
-    // 音乐联通
-    toggleMic() {
-      this.isAudioActive = !this.isAudioActive
-      // wrtc
-      this.publishAudio(this.isAudioActive)
-    },
+    
     // 发布声音
     publishAudio(audio) {
       localUsersService.isWebCamEnabled()
@@ -337,6 +337,9 @@ export default {
     // 点击开启视频
     toggleCam() {
       const isVideoActive = !this.webcamVideoActive
+      if (isVideoActive) {
+        this.form.camSelectedDevice = devicesService.getCamSelected().device
+      }
       // 发布视频  并且 更新webrt发布状态
       openViduWebRTCService.publishWebcamVideo(isVideoActive)
       // 2个代表关闭视频
@@ -351,6 +354,15 @@ export default {
         // 2个都放
         localUsersService.enableWebcamUser()
       }
+    },
+    // 音乐联通
+    toggleMic() {
+      this.isAudioActive = !this.isAudioActive
+      if(this.isAudioActive){
+        this.form.micSelectedDevice = devicesService.getMicSelected()?.device 
+      }
+      // wrtc
+      this.publishAudio(this.isAudioActive)
     },
     // 选择音频
     async onMicrophoneSelected() {
@@ -367,6 +379,7 @@ export default {
           // 重新发布webrtc
           await openViduWebRTCService.replaceTrack(null, audioSource, mirror)
           devicesService.setMicSelected(audioSource)
+          console.log("选择了麦克风",devicesService.getMicSelected(),audioSource)
           this.micSelected = devicesService.getMicSelected()
         }
         // Publish microphone
@@ -396,17 +409,19 @@ export default {
         mirror,
       }
       if (this.hasAudioDevices || this.hasVideoDevices) {
-        // 创建一个publisher
+        // 初始化创建publisher
         const publisher = openViduWebRTCService.initPublisher(
           undefined,
           properties
         )
-        // 初始化视频流
+        console.log("-------初始化发布流/发起授权 完成-------")
+        // 同步到服务 localUsersService
         localUsersService.setWebcamPublisher(publisher)
+        // 是否已经授权都会回调
         this.handlePublisherSuccess(publisher)
         this.handlePublisherError(publisher)
       } else {
-        // 2个都没有的话，采用选择 自动进入会议室 或者 显示卡片 让其选择共享屏幕与否？
+        // 没有设备的话
         localUsersService.setWebcamPublisher(null)
         // Emit publisher to webcomponent and angular-library
         // this.ovSettings.isAutoPublish() -> true
@@ -414,12 +429,41 @@ export default {
           this.joinSession()
           return
         }
+        // 不用等待用户授权，直接显示
         this.showConfigCard = true
       }
     },
-    /** 保存头像
+    // 发布一个屏幕流
+    initScreenPublisher() {
+      const videoSource = ScreenType.SCREEN
+      const audioSource = this.hasAudioDevices ? undefined : null
+      // 可以加共享
+      const willThereBeWebcam =
+        localUsersService.isWebCamEnabled() &&
+        localUsersService.hasWebcamVideoActive()
+      // 有视频流么，有肯定无需声音
+      const hasAudio = willThereBeWebcam
+        ? false
+        : this.hasAudioDevices && this.isAudioActive
+      const properties = openViduWebRTCService.createPublisherProperties(
+        videoSource,
+        audioSource,
+        true,
+        hasAudio,
+        false
+      )
+      try {
+        return openViduWebRTCService.initPublisher(undefined, properties)
+      } catch (error) {
+        console.log(error)
+        this.$message({
+          text: utils.handlerScreenShareError(error),
+          type: "error",
+        })
+      }
+    },
+    /** 拍照
      *  */
-
     captureAvatar() {
       this.capturedAvatar = avatarService.createCapture()
       this.form.avatarType = AvatarType.CAPTURED
@@ -473,43 +517,14 @@ export default {
         })
         return
       }
-      // 只有屏幕的情况，那就是先触发放进去用户，再把屏幕关了
-      console.log("？有必要么  直接关了不能？")
+      // 只有屏幕的情况，那就是先触发放进去用户，再把屏幕关了 ,可精简一步
       // Disabling screnShare and enabling webcam
       localUsersService.enableWebcamUser()
       localUsersService.disableScreenUser()
     },
-    // 发布一个屏幕流
-    initScreenPublisher() {
-      const videoSource = ScreenType.SCREEN
-      const audioSource = this.hasAudioDevices ? undefined : null
-      // 可以加共享
-      const willThereBeWebcam =
-        localUsersService.isWebCamEnabled() &&
-        localUsersService.hasWebcamVideoActive()
-      // 有视频流么，有肯定无需声音
-      const hasAudio = willThereBeWebcam
-        ? false
-        : this.hasAudioDevices && this.isAudioActive
-      const properties = openViduWebRTCService.createPublisherProperties(
-        videoSource,
-        audioSource,
-        true,
-        hasAudio,
-        false
-      )
-      try {
-        return openViduWebRTCService.initPublisher(undefined, properties)
-      } catch (error) {
-        console.log(error)
-        this.$message({
-          text: utils.handlerScreenShareError(error),
-          type: "error",
-        })
-      }
-    },
+
     handlePublisherSuccess(publisher) {
-      // 授权 成功事件
+      // 授权成功
       publisher.once("accessAllowed", async () => {
         // Emit publisher to webcomponent and angular-library
         this.emitPublisher(publisher)
@@ -520,7 +535,7 @@ export default {
         }
 
         if (devicesService.areEmptyLabels()) {
-          // 重新初始化可以获取字符串名字
+          // 重新初始化设备 信息详细
           await devicesService.initDevices()
           if (this.hasAudioDevices) {
             const audioLabel = publisher?.stream
@@ -542,7 +557,7 @@ export default {
       })
     },
     handlePublisherError(publisher) {
-      // 拒绝获取权限
+      // 拒绝权限
       publisher.once("accessDenied", (e) => {
         let message
         if (e.name === OpenViduErrorName.DEVICE_ALREADY_IN_USE) {
@@ -570,7 +585,7 @@ export default {
         console.log(e.message)
       })
     },
-    // 不太理解，暂时理解是传递给下个组件
+    // 暂留，向上传递新发布
     emitPublisher(publisher) {
       this.$emit("publisherCreated", publisher)
     },

@@ -76,14 +76,17 @@
       </div>
     </el-col>
     <el-col :span="8">
-      <el-button
-        style="position: absolute; right: 0"
-        icon="el-icon-chat-line-square"
-        @click="toggleChat"
-        :disabled="isConnectionLost"
-        v-if="ovSettings"
-      >
-      </el-button>
+      <!-- is-dot -->
+      <el-badge :value="messagesUnread" :hidden="messagesUnread===0" :max="99" class="item">
+        <el-button
+          style="position: absolute; right: 0"
+          icon="el-icon-chat-line-square"
+          @click="toggleChat"
+          :disabled="isConnectionLost"
+          v-if="ovSettings"
+        >
+        </el-button>
+      </el-badge>
     </el-col>
   </el-row>
 </template>
@@ -115,7 +118,7 @@ export default {
     }
   },
   computed: {
-    ...mapGetters(["screenShareState", "webcamVideoActive"]),
+    ...mapGetters(["screenShareState", "webcamVideoActive","messagesUnread"]),
   },
   props: {
     initialTokenStatus: Boolean,
@@ -163,4 +166,9 @@ export default {
   },
 }
 </script>
- 
+ <style scoped>
+ .item { 
+  position: absolute;
+    right: 0;
+    bottom: 40;
+}</style>

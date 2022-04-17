@@ -31,7 +31,7 @@ class ChatService {
     this.messagesUnread = 0
     this.chatOpened = this.toggleChatObs()
   }
-  // 初始化事件
+  // 初始化事件,暂时不做使用   采用vuex进行控制了
   setChatComponent (chatSidenav) {
     this.chatComponent = chatSidenav
   }
@@ -54,11 +54,7 @@ class ChatService {
       })
       if (!this.isChatOpened()) {
         this.addMessageUnread()
-        // 消息弹窗
-        // this.notificationService.newMessage(
-        //   data.nickname.toUpperCase(),
-        //   this.toggleChat.bind(this)
-        // )
+        // 不消息弹窗提醒
       }
       this._messageList(this.messageList)
     })
@@ -102,6 +98,11 @@ class ChatService {
   addMessageUnread () {
     this.messagesUnread++
     this._messagesUnread(this.messagesUnread)
+  }
+  clear(){
+    this._messagesUnread(0)
+    this._toggleChat(false)
+    this._messageList([])
   }
 }
 export const chatService = new ChatService()
