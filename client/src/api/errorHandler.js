@@ -1,18 +1,28 @@
 import { MessageBox, Message } from "element-ui"
 import router from "@/main"
 import accToken from "@/lib/utils/localStrory"
+let loginMessageStatus = false
 const errorHandler = {
   onTokenExpired: () => {
-    MessageBox.confirm("登录状态已过期，请重新登录", "提示", {
-      confirmButtonText: "确定",
-      type: "error",
-      showClose: false,
-      showCancelButton: false,
-      closeOnClickModal: false
-    }).then(() => {
-      accToken.removeToken()
-      router.push({ name: "login" })
-    })
+    if (!loginMessageStatus) {
+      loginMessageStatus = true
+      MessageBox.confirm("登录状态已过期，请重新登录", "提示", {
+        confirmButtonText: "确定",
+        type: "error",
+        showClose: false,
+        showCancelButton: false,
+        closeOnClickModal: false
+      })
+        .then(() => {
+          accToken.removeToken()
+          router.push({
+            name: "login"
+          })
+        })
+        .finally(() => {
+          loginMessageStatus = false
+        })
+    }
   }
 }
 export const asyncErrorHandler = function (err) {
@@ -25,10 +35,8 @@ export const asyncErrorHandler = function (err) {
     Message({
       message: err.message,
       type: "error",
-      duration: 1 * 1000
+      duration: 3 * 1000
     })
     break
   }
 }
-
-

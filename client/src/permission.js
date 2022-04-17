@@ -47,7 +47,6 @@ router.beforeEach(async (to, from, next) => {
                   store.getters.addRouters
                 )
                 router.addRoutes(store.getters.addRouters) // 动态添加可访问路由表
-
                 console.log(
                   "可访问的",
                   store.getters.addRouters,
