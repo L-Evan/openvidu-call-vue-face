@@ -55,6 +55,12 @@
               autocomplete="off"
             ></el-input>
           </el-form-item>
+          <el-form-item label="邮箱" :label-width="formLabelWidth">
+            <el-input
+              v-model="updateData.email"
+              autocomplete="off"
+            ></el-input>
+          </el-form-item>
           <el-form-item label="角色" :label-width="formLabelWidth">
             <el-select
               :disabled="$store.getters.roles[0] != 'admin'"
@@ -68,6 +74,12 @@
                 :value="item.roleId"
               ></el-option>
             </el-select>
+          </el-form-item>
+          <el-form-item label="新密码" :label-width="formLabelWidth">
+            <el-input
+              v-model="updateData.password"
+              autocomplete="off"
+            ></el-input>
           </el-form-item>
         </el-form>
         <div slot="footer" class="dialog-footer">
@@ -89,8 +101,8 @@ import Api from "@/api/user.js"
 export default {
   ROUTER_ROLES: ["admin"],
   ROUTER_NAME: "users",
-  ROUTER_TITLE: "用户处理",
-  ROUTER_ICON: "el-icon-s-help",
+  ROUTER_TITLE: "用户管理",
+  ROUTER_ICON: "el-icon-user",
   data() {
     return {
       search: "",
@@ -99,11 +111,13 @@ export default {
       roles: [{}],
       users: [],
       updateData: {
-        userId: "",
-        userName: "",
-        avatar: "",
-        roleId: "",
-        roleRemarks: "",
+        email:undefined,
+        password:undefined,
+        userId: undefined,
+        userName: undefined,
+        avatar: undefined,
+        roleId: undefined,
+        roleRemarks: undefined,
       },
     }
   },
@@ -130,7 +144,11 @@ export default {
         })
     },
     initForm(index, user) {
-      this.updateData = user
+      // 只放需要的数据
+      const {userId,userName,roleId,email} = user
+      this.updateData = {userId,userName,roleId,email}
+
+      this.updateData.password = undefined
       console.log("更新的表单，", this.updateData)
       this.getAllUserRole()
     },
@@ -148,10 +166,6 @@ export default {
       const res = await Api.getAllUser()
       console.log("用户列表", res)
       this.users = res.users
-      this.$message({
-        message: "刷新数据成功！",
-        type: "success",
-      })
     },
   },
   mounted() {
