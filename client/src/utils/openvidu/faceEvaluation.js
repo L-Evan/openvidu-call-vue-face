@@ -5,13 +5,14 @@ const mouthBase = 0.3
 // 表情
 const mainPowers = [0.649118, 0.27895457, 0.07192743]
 const faceMoodPowers = [
-  0.059785,
-  0.027026,
-  0.039953,
-  0.368842, // max
-  0.059785,
-  0.260724,
-  0.183885
+  0.064,0.027,0.044,0.366,0.055,0.0257,0.186
+  // 0.059785,
+  // 0.027026,
+  // 0.039953,
+  // 0.368842, // max
+  // 0.059785,
+  // 0.260724,
+  // 0.183885
 ]
 const moodType = {
   angry: 0,
@@ -22,7 +23,7 @@ const moodType = {
   surprised: 5,
   neutral: 6
 }
-// , 0.8
+// 0.8
 const fatigueValues = [1, 0.8,0.5]
 // 估计最大值
 const maxExpressScore =
@@ -57,6 +58,7 @@ export async function headCheck (result) {
   // console.log({ pitch, yaw, roll })
   yaw = yaw > maxyaw ? maxyaw : yaw
   pitch = pitch > maxpitch ? maxpitch : pitch
+  console.error(`角度 ： ${yaw}  ${pitch} `)
   // computerProportion(Math.abs(pitch * 100), maxpitch)
   // headTurnDegree: Math.min(yaw, pitch),
   return { pitch, yaw, roll }
@@ -77,25 +79,23 @@ function computerProportion (value, maxvalue) {
 function fatigueCalculation (
   closeEysCount,
   openMouthCount,
-  chectCount = 5,
-  checkTime = 5
+  chectCount,
+  checkTime
 ) {
-  // PERCLOS值 max 1
+  // PERCLOS值
   const m1 = closeEysCount / chectCount
-  // 平均闭眼时间 max 1
-  const m2 = (closeEysCount / chectCount) * checkTime // ? checkTime / closeEysCount : 1
-  // 打哈切频率 max 1
+  // 平均闭眼时间
+  const m2 = closeEysCount / chectCount*checkTime
+  // 打哈切频率
   const m3 = openMouthCount / chectCount
-  console.log(
-    `m1:${m1},m2:${m2},m3:${m3},closeEysCount:${closeEysCount},openMouthCount:${openMouthCount},checkTime:${checkTime}`
-  )
-  //(m1 + 0.8 * m2 + 0.5 * m3) * mainPowers[1] m2
+  console.log(`m1:${m1},m2:${m2},m3:${m3},closeEysCount:${closeEysCount},openMouthCount:${openMouthCount},checkTime:${checkTime}`)
+  const averageClosePower= fatigueValues[1]
   const p = computerProportion(
-    [m1,0,m3]
+    [m1,m2,m3]
       .filter((value, index) => value * fatigueValues[index])
       .reduce((acc, cur) => acc + cur, 0),
-    maxFatigue-0.8
-  ) 
+    maxFatigue+averageClosePower*(checkTime-1)
+  )
   return p * mainPowers[1]
 }
 function moodCalculation (moodCounts) {
@@ -111,7 +111,6 @@ function moodCalculation (moodCounts) {
 }
 
 export function cycleComputer (faces, checkTime = 5) {
-  console.trace()
   const closeEysCount = faces.filter(face => face.eyeData.eyesClosed).length
   const openMouthCount = faces.filter(face => face.mouthData.mouthOpen).length
   // 68
@@ -163,7 +162,7 @@ export function eyeStatusCheck (face68_) {
   )
   const R2 = ((1 / 2) * (t4 + t5)) / t6
   const R = (1 / 2) * (R1 + R2)
-  console.log("眼睛闭眼程度" + R)
+  console.error("眼睛闭眼程度" + R)
   if (R >= 0.28) {
     // console.log("眼睛正常状态")
   } else if (R <= 0.22) {
@@ -192,7 +191,7 @@ export function mouthStatusCheck (face68_) {
   )
   // 当嘴巴闭合时,闭合度为０
   const R = ((1 / 2) * (t1 + t2)) / t3 - mouthBase
-  console.log("闭嘴程度" + R)
+  console.error("闭嘴程度" + R)
   if (R <= 0.05) {
     // console.log("嘴巴正常状态")
   } else if (R >= 0.17) {
