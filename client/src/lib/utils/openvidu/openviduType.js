@@ -44,7 +44,30 @@ const LayoutClass = {
   BIG_ELEMENT: "OV_big",
   SMALL_ELEMENT: "OV_small"
 }
+const CHECK_CYCLE = 5000
+const expressEToC = {
+  neutral: "正常",
+  happy: "开心",
+  sad: "伤心",
+  angry: "生气",
+  surprised: "惊讶",
+  disgusted: "厌恶",
+  fearful: "恐惧",
+  none: "无",
+}
+const expressInit={
+  angry: 0,
+  disgusted: 0,
+  fearful: 0,
+  happy: 0,
+  neutral: 0,
+  surprised: 0,
+  sad: 0,
+}
 export {
+  CHECK_CYCLE,
+  expressInit,
+  expressEToC,
   CameraType,
   LayoutType,
   LayoutClass,
