@@ -178,11 +178,21 @@
     </div>
     <div class="modal-footer" style="justify-content: center">
       <el-button
+        v-show="preHotConfig"
         style="margin: 15px; width: 80%"
         @click="joinSession"
-        type="warning"
-        >进入会议</el-button
+        type="success"
+        >参与会议</el-button
       >
+      <el-button
+        v-show="!preHotConfig"
+        style="margin: 15px; width: 80%"
+        @click="initFaceService"
+        type="warning"
+        v-loading.fullscreen.lock="fullscreenLoading"
+      >
+        初始化配置
+      </el-button>
     </div>
   </el-card>
 </template>
@@ -190,6 +200,7 @@
 <script>
 import { mapGetters } from "vuex"
 import { AvatarType } from "@/lib/utils/openvidu/openviduType"
+import { faceService } from "@/lib/utils/openvidu/faceService"
 import { tokenService } from "@/lib/utils/openvidu/openviduToken"
 import { devicesService } from "@/lib/utils/openvidu/device"
 import { localUsersService } from "@/lib/utils/openvidu/openviduMainUser"
@@ -214,6 +225,8 @@ export default {
 
   data() {
     return {
+      fullscreenLoading: false,
+      preHotConfig: false,
       AvatarType,
       // 所有用户
       avatarService: null,
@@ -269,7 +282,10 @@ export default {
       return this.webcamVideoActive && this.hasVideoDevices
     },
   },
-  created() {},
+  created() {
+    // 偷偷加载,减小压力
+    faceService.initialize()
+  },
   async mounted() {
     this.setSessionName()
     await devicesService.initDevices()
@@ -280,6 +296,22 @@ export default {
     this.start()
   },
   methods: {
+    async initFaceService() {
+      // this.fullscreenLoading = true
+      const loading = this.$loading({
+        lock: true,
+        text: "拼命加载中",
+        spinner: "el-icon-loading",
+        background: "rgba(0, 0, 0, 0.7)",
+      })
+      setTimeout(async () => {
+        await faceService.initialize()
+        await faceService.detectFaceInit()
+        this.preHotConfig = true
+        loading.close()
+        this.fullscreenLoading = false
+      }, 300)
+    },
     async start() {
       console.log("-------授权则显示到组件-------")
       this.setDevicesInfo(devicesService)
@@ -327,7 +359,7 @@ export default {
       localUsersService.updateUsersNickname(this.form.nickName)
       storageSrv.set(Storage.USER_NICKNAME, this.form.nickName)
     },
-    
+
     // 发布声音
     publishAudio(audio) {
       localUsersService.isWebCamEnabled()
@@ -358,8 +390,8 @@ export default {
     // 音乐联通
     toggleMic() {
       this.isAudioActive = !this.isAudioActive
-      if(this.isAudioActive){
-        this.form.micSelectedDevice = devicesService.getMicSelected()?.device 
+      if (this.isAudioActive) {
+        this.form.micSelectedDevice = devicesService.getMicSelected()?.device
       }
       // wrtc
       this.publishAudio(this.isAudioActive)
@@ -379,7 +411,11 @@ export default {
           // 重新发布webrtc
           await openViduWebRTCService.replaceTrack(null, audioSource, mirror)
           devicesService.setMicSelected(audioSource)
-          console.log("选择了麦克风",devicesService.getMicSelected(),audioSource)
+          console.log(
+            "选择了麦克风",
+            devicesService.getMicSelected(),
+            audioSource
+          )
           this.micSelected = devicesService.getMicSelected()
         }
         // Publish microphone
