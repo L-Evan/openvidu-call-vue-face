@@ -133,9 +133,5 @@ export function getValueByURL(url) {
   })
   return obj
 }
-// Math.floor(result.toFixed(4) * 10000) / 100
-export function toFixed(result, s = 4) {
-  var times = Math.pow(10, s)
-  return Math.floor(result.toFixed(s) * times) / times
-}
+
  

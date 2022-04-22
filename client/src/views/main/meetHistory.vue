@@ -13,6 +13,7 @@
       "
     >
       <el-table-column align="center"  label="会议名称" prop="sessionName"> </el-table-column>
+      <el-table-column align="center"  label="创建人" prop="createdBy"> </el-table-column>
       
       <el-table-column align="center" label="创建时间" prop="createdTime"> </el-table-column>
       <el-table-column align="center" label="结束时间" prop="overTime"> </el-table-column>
@@ -22,9 +23,15 @@
           <div slot="reference" class="name-wrapper">
             <el-tag  :type="scope.row.overStatus?'success':'info'" size="medium">{{ scope.row.overStatus?"结束":"进行" }}</el-tag>
           </div>
- 
         </template></el-table-column
       >
+      <!-- <el-table-column align="center" label="会议状态" prop="isShare"
+        ><template slot-scope="scope">
+          <div slot="reference" class="name-wrapper">
+            <el-tag  :type="scope.row.isShare?'success':'info'" size="medium">{{ scope.row.isShare?"共享":"正常" }}</el-tag>
+          </div>
+        </template></el-table-column
+      > -->
       <el-table-column align="center">
         <template slot="header" slot-scope="scope">
           <el-input v-model="search" size="mini" placeholder="输入关键字搜索" />

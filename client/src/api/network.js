@@ -16,13 +16,12 @@ axios.defaults.timeout = 5000
 axios.interceptors.request.use(
   function (config) {
     // 在发送请求之前做些什么
-    console.log("请求前的token:", all_stroy.getToken(), config)
+    console.log(`发起请求路径：${config?.url}  token长度： ${all_stroy.getToken()?.length}`)
     config.headers["x-authorization"] = all_stroy.getToken()
-
     return config
   },
   function (error) {
-    console.log("响应错", error)
+    console.log("请求的响应错误", error)
     // 对请求错误做些什么
     return Promise.reject(error)
   }
@@ -31,7 +30,7 @@ axios.interceptors.request.use(
 // 添加响应拦截器
 axios.interceptors.response.use(
   function (response) {
-    console.log("响应", response)
+    console.log("-----响应的数据-----", response?.data)
     const token = response.headers["x-authorization"]
     if (token) {
       all_stroy.setToken(token)

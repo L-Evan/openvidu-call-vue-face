@@ -23,11 +23,11 @@ class OpenViduLayoutService {
   _initialize () {
     this.openviduLayout = new OpenViduLayout()
     this.openviduLayoutOptions = this.getOptions()
-    console.log("初始化，openviduLayout",document.getElementById("layout"))
     this.openviduLayout.initLayoutContainer(
       document.getElementById("layout"),
       this.openviduLayoutOptions
     )
+    console.log("------初始化视频布局完毕------")
   }
 
   getOptions () {

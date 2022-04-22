@@ -1,6 +1,6 @@
 class StorageService {
   constructor () {
-    this.storage = window.localStorage
+    this.storage = window.sessionStorage
   }
 
   set (key, item) {

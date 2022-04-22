@@ -2,8 +2,8 @@
   <div class="page">
     <div class="container">
       <div class="left">
-        <div class="login">Web Start</div>
-        <div class="eula">欢迎使用Web星！</div>
+        <div class="login">视频会议</div>
+        <div class="eula">欢迎使用情绪分析会议系统！</div>
       </div>
       <div class="right">
         <lt-tag
