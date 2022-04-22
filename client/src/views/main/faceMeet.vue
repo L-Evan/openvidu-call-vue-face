@@ -1,7 +1,7 @@
 <template>
   <div class="wrapper">
     <div
-      style="height: calc(100% - 100px); line-height: 80vh; display: list-item"
+      style="height: calc(100% - 50px); line-height: 80vh; display: list-item"
     >
       <el-form
         style="text-align: center"
@@ -75,6 +75,6 @@ export default {
   background-size: cover;
 
   overflow: hidden;
-  height: 100%;
+  height: calc(100% - 50px);
 }
 </style>

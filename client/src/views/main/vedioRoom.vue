@@ -95,8 +95,6 @@
 import websocket from "@/lib/utils/openvidu/websocket"
 import vedioStream from "@/components/openvidu/openviduStream"
 // import UserVideo from "@/components/openvidu/UserVideo"
-import { faceService } from "@/lib/utils/openvidu/faceService"
-
 import { openViduLayoutService as oVLayout } from "@/lib/utils/openvidu/layout"
 import { ExternalConfigModel } from "@/lib/utils/openvidu/openviduExternalConfig"
 import { storageSrv } from "@/lib/utils/openvidu/newStory"
@@ -176,10 +174,6 @@ export default {
     }
   },
   // 父beforeCreate-> 父create -> 子beforeCreate-> 子created -> 子mounted -> 父mounted
-  created() {
-    // 加载人脸识别
-    faceService.initialize()
-  },
   mounted() {
     // 外部配置 传进来 此处做模拟
     this.externalConfigInit()

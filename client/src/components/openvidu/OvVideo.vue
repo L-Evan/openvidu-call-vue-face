@@ -29,15 +29,11 @@ export default {
   },
   props: {
     streamManager: Object,
-    mutedSound: Boolean,
-    isRoom: {
-      type: Boolean,
-      default: false,
-    }, 
+    mutedSound: Boolean
   }, 
   computed: {
     id() {
-      let id = this.isRoom ? "room-" : ""
+      let id =  ""
       id+= this.streamManager?.stream?.streamId
         ? "video-" + this.streamManager.stream.streamId
         : "video-undefined"

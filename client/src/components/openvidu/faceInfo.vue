@@ -8,7 +8,12 @@
         ></el-avatar>
       </el-col>
       <el-col :span="4"
-        ><el-badge :value="faceData.expressCount" :hidden="faceData.expressCount===0" :max="9" class="item">
+        ><el-badge
+          :value="faceData.expressCount"
+          :hidden="faceData.expressCount === 0"
+          :max="9"
+          class="item"
+        >
           <el-tag>{{ faceData.expressStr | toExpressStr }}</el-tag>
         </el-badge></el-col
       >
@@ -20,7 +25,11 @@
         ></el-progress
       ></el-col>
       <el-col :span="6"
-        ><el-tooltip  style="margin-top: 13px" :content="'提醒功能开关: ' + showFocusLow" placement="top">
+        ><el-tooltip
+          style="margin-top: 13px"
+          :content="'提醒功能开关: ' + showFocusLow"
+          placement="top"
+        >
           <el-switch
             v-model="showFocusLow"
             active-color="#13ce66"
@@ -29,11 +38,13 @@
             :inactive-value="false"
           >
           </el-switch> </el-tooltip
-      ></el-col>
-    </el-row>
-
+      >
+    <!-- 调试用 -->
+    <!-- 用来测试 -->
+    <canvas id="myCanvas" v-show="showSwitch" class="canvas" />
     <el-tooltip :content="'识别情绪开关: ' + checkFaceStatus" placement="top">
       <el-switch
+          style="margin-top: 17px"
         v-show="showSwitch"
         v-model="checkFaceStatus"
         active-color="#13ce66"
@@ -44,12 +55,13 @@
       >
       </el-switch>
     </el-tooltip>
+      </el-col>
+    </el-row>
   </div>
 </template>
 
 <script>
 import websocket from "@/lib/utils/openvidu/websocket"
-import {toFixed} from "@/utils/index"
 import { faceService } from "@/lib/utils/openvidu/faceService"
 import { cycleComputer } from "@/utils/openvidu/faceEvaluation"
 import { tokenService } from "@/lib/utils/openvidu/openviduToken"
@@ -62,13 +74,14 @@ export default {
         focusData: 100,
       },
       sessionName: "",
-      // 识别开启状态
+      // 临时识别开启状态
       checkFaceStatus: true,
       // 提醒开关
       showFocusLow: true,
-      showSwitch: false,
+      showSwitch: true,
       currentFaces: [],
       monitSetTimeContain: null,
+      uploadDataStatus: true,
     }
   },
   // 不能用this
@@ -95,7 +108,7 @@ export default {
   },
   destroyed() {
     faceService.clear()
-    clearTimeout(this.uploadMonitSetTimeContain)
+    this.uploadDataStatus = false
   },
   watch: {
     initialTokenStatus(value) {
@@ -120,137 +133,171 @@ export default {
     },
   },
   methods: {
-    monitSaveFaceToServer() {
+    async monitSaveFaceToServer() {
       let i = 0
       const sessionName = tokenService.getSessionId()
       console.log("开始监听数据：", sessionName)
-
-      const uploadDataFunc = setTimeout.bind(
-        null,
-        async () => {
-          console.log("监听中", i, this.currentFaces.length)
-          if (i < this.currentFaces.length) {
-            console.log("发送数据" + i, sessionName)
-            try {
-              websocket.sendDataToServer(
-                "saveFace",
-                JSON.stringify(this.currentFaces.slice(i))
-              )
-              i = this.currentFaces.length
-            } catch (e) {
-              console.log("发送数据失败", e)
-            }
+      const uploadDataFunc = async () => {
+        console.log("数据监听中", i, this.currentFaces.length)
+        if (i < this.currentFaces.length) {
+          console.log("发送数据" + i, sessionName)
+          try {
+            websocket.sendDataToServer(
+              "saveFace",
+              JSON.stringify(this.currentFaces.slice(i))
+            )
+            i = this.currentFaces.length
+          } catch (e) {
+            console.log("发送数据失败", e)
           }
-          this.uploadMonitSetTimeContain = uploadDataFunc()
-        },
-        1000
-      )
-      this.uploadMonitSetTimeContain = uploadDataFunc()
+        }
+      }
+      while (this.uploadDataStatus) {
+        await uploadDataFunc()
+        await this.sleep(1000)
+      }
     },
-    checkFaceByTime(cycleTime, monitor = false) {
+    async monitCheckFace(cycleTime, monitor = false) {
       let checkStartTime = null
       let isCapture = true
       let captureImage = ""
       let checkCount = 0
+      let beforeHaveFace = true
       // 会议id
       let startSesstionToken = tokenService.getWebcamToken()
       let currentFaces = []
       // 闭包
-      const oneTimeFun = setTimeout.bind(
-        null,
-        async () => {
-          if (checkCount++ === 0) {
-            // 第一次检测清空
-            checkStartTime = Date.now()
-            isCapture = true
+      const oneTimeFun = async () => {
+        if (checkCount++ === 0) {
+          // 第一次检测清空
+          checkStartTime = Date.now()
+          isCapture = true
+        }
+        const timed = Date.now() - checkStartTime
+        console.log("周期检测时间差：" + timed)
+        // check
+        const checkSesstionToken = tokenService.getWebcamToken()
+        if (checkSesstionToken !== startSesstionToken) {
+          console.error(
+            "异常会议号变化",
+            startSesstionToken,
+            checkSesstionToken
+          )
+          // 如果token变了，就不检测了
+          faceService.clear()
+          return
+        }
+        const checkPointTime = Date.now()
+        const faceData = await faceService.detectFace(isCapture)
+        console.log("单次检测差：" + (Date.now() - checkPointTime))
+        // 完成一次检测并且有数据
+        if (faceData) {
+          beforeHaveFace = true
+          // const { moodData, eyeData, mouthData, headData } = faceData
+          // 更新检测图片
+          if (faceData.capturedAvatar) {
+            isCapture = false
+            captureImage = faceData.capturedAvatar
+            // 暂时只传一张图片
+            faceData.capturedAvatar = ""
           }
-          const timed = Date.now() - checkStartTime
-          console.log("周期检测时间差：" + timed)
-          // check
-          const checkSesstionToken = tokenService.getWebcamToken()
-          if (checkSesstionToken !== startSesstionToken) {
-            console.error(
-              "异常会议号变化",
-              startSesstionToken,
-              checkSesstionToken
-            )
-            // 如果token变了，就不检测了
-            faceService.clear()
-            return
+          // express变化监听
+          const nowExpressStr = faceData.moodData.faceStr
+          if (this.faceData.expressStr == nowExpressStr) {
+            this.faceData.expressCount++
+          } else {
+            this.faceData.expressCount = 0
           }
-          const checkPointTime = Date.now()
-          const faceData = await faceService.detectFace(isCapture)
-          console.log("单次检测差：" + (Date.now() - checkPointTime))
-          // 完成一次检测并且有数据
-          if (faceData) {
-            // const { moodData, eyeData, mouthData, headData } = faceData
-            // 更新检测图片
-            if (faceData.capturedAvatar) {
-              isCapture = false
-              captureImage = faceData.capturedAvatar
-              // 暂时只传一张图片
-              faceData.capturedAvatar = ""
-            }
-            // express变化监听
-            const nowExpressStr = faceData.moodData.faceStr
-            if (this.faceData.expressStr == nowExpressStr) {
-              this.faceData.expressCount++
-            } else {
-              this.faceData.expressCount = 0
-            }
-            this.faceData.expressStr = nowExpressStr || "none"
-            //添加
-            currentFaces.push(faceData)
+          this.faceData.expressStr = nowExpressStr || "none"
+          //添加
+          currentFaces.push(faceData)
+        }
+        // 完成一个周期
+        if (faceData && timed+1000>= cycleTime) {
+          // 计算专注度
+          const focusData = cycleComputer(
+            currentFaces,
+            parseInt(cycleTime / 1000)
+          )
+          // 页面显示数据监听
+          this.faceData.focusData =parseInt((focusData.result*100).toFixed(0))
+          // 功能提醒
+          if (this.showFocusLow && this.faceData.focusData < 55) {
+            this.$notify({
+              title: "提醒",
+              message: "加油!坚持就是胜利！",
+              type: "warning",
+            })
           }
-          // 完成一个周期
-          if (faceData && timed >= cycleTime) {
-            // 计算专注度
-            const focusData = cycleComputer(
-              currentFaces,
-              Math.min(parseInt(cycleTime / 1000), currentFaces.length)
-            )
-            // 页面显示数据监听
-            this.faceData.focusData = toFixed(focusData.result ,4)*100
-            // 功能提醒
-            if (this.showFocusLow && this.faceData.focusData < 55) {
-              this.$notify({
-                title: "提醒",
-                message: "加油!坚持就是胜利！",
-                type: "warning",
-              })
-            }
-            console.log("现在的专注度" + focusData.result)
+          console.log(`此时专注度:${this.faceData.focusData} 次数： ${checkCount} 
+          时间：${timed}
+          成功： ${currentFaces.length}`)
 
-            // 所有数据
-            // ,暂不存到缓存中 currentFaces
-            const cycleData = {
-              checkStartTime,
-              checkEndTime: Date.now(),
-              checkCount,
-              focusData,
-              currentFaces,
-              captureImage,
-            }
-            // 更新到全局
-            this.currentFaces.push(cycleData)
-            faceService.addFaceVector(startSesstionToken, cycleData)
-            checkCount = 0
-            currentFaces = []
+          // 所有数据
+          // 暂不存到缓存中 currentFaces
+          const cycleData = {
+            checkStartTime,
+            checkEndTime: Date.now(),
+            checkCount,
+            focusData,
+            currentFaces,
+            captureImage,
           }
-          // 当前页面控制状态 checkFaceStatus
-          if (timed >= cycleTime && (!monitor || !this.checkFaceStatus)) {
-            if (!monitor) {
-              this.checkFaceStatus = false
-            }
-            faceService.clear()
-            return
+          // 更新到全局数据队列
+          this.currentFaces.push(cycleData)
+          faceService.addFaceVector(startSesstionToken, cycleData)
+          checkCount = 0
+          currentFaces = []
+        // 1分钟检测不到人的话会给一个空值
+        }else if(timed>15000&&beforeHaveFace){
+          if(this.showFocusLow){
+            this.$notify({
+              title: "提醒",
+              message: "OMG！检测不到人了！",
+              type: "warning",
+            })
           }
-          // next
-          faceService.setTimeoutContainer = oneTimeFun()
-        },
-        700
-      )
-      faceService.setTimeoutContainer = oneTimeFun()
+          const focusData = { closeEysCount:0,openMouthCount:0,checkTime:0,len:0,fatigue:0, headTurnDegree:0, mood:0, result:0 }
+          console.log("识别不到人的情况：",focusData)
+          const cycleData = {
+            checkStartTime,
+            checkEndTime: Date.now(),
+            checkCount,
+            focusData,
+            currentFaces,
+            captureImage: faceService.captureUserImage(),
+          }
+          // 更新到全局数据队列
+          this.currentFaces.push(cycleData)
+          faceService.addFaceVector(startSesstionToken, cycleData)
+          checkCount = 0
+          captureImage = ""
+          currentFaces = []
+          beforeHaveFace = false
+        }
+        // 当前页面控制状态
+        if (timed >= cycleTime && (!monitor || !this.checkFaceStatus)) {
+          if (!monitor) {
+            this.checkFaceStatus = false
+          }
+          faceService.clear()
+          return
+        }
+      }
+      // 每秒检测一次
+      while (faceService.start) {
+        const start = Date.now()
+        await oneTimeFun()
+        const d = 1000 - (Date.now() - start)
+        await this.sleep(d > 0 ? d : 0)
+      }
+    },
+    sleep(time) {
+      return new Promise((r) => {
+        setTimeout(() => {
+          r()
+        }, time)
+      })
     },
     /**
      * faceService.setMonitorCheck 控制是否每次只检测一次
@@ -265,13 +312,14 @@ export default {
         faceService.clear()
       }
       faceService.initialize().then(() => {
+        console.log("-----开始检测人脸-----")
         faceService.start = true
         // 定时检测
         if (faceService.setMonitorCheck) {
-          this.checkFaceByTime(5000, true)
+          this.monitCheckFace(5000, true)
           return
         }
-        this.checkFaceByTime(5000)
+        this.monitCheckFace(5000)
       })
     },
   },
@@ -282,5 +330,12 @@ export default {
 .item {
   margin-top: 10px;
   margin-right: 40px;
+}
+.canvas {
+  position: absolute;
+  z-index: 1000;
+  width: 1056px;
+  height: 966px;
+  top: 67px;
 }
 </style>

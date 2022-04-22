@@ -170,5 +170,5 @@ export default {
  .item { 
   position: absolute;
     right: 0;
-    bottom: 40;
+    top: 13px;
 }</style>
