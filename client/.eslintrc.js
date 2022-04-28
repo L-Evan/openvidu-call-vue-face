@@ -2,6 +2,7 @@ module.exports = {
   // vue-eslint- ？
   "parser": "vue-eslint-parser",
   "env": {
+    "node": true, // 环境变量问题
     "browser": true,
     "commonjs": true,
     "es2021": true,

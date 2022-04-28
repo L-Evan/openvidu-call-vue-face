@@ -4,7 +4,7 @@
 const path = require("path")
 //jquery
 const webpack = require("webpack")
-
+const EncodingPlugin = require("webpack-encoding-plugin");
 const HtmlWebpackPlugin = require("html-webpack-plugin")
 const { CleanWebpackPlugin } = require("clean-webpack-plugin")
 //vue
@@ -13,14 +13,13 @@ const { VueLoaderPlugin } = require("vue-loader")
 const MiniCssExtractPlugin = require("mini-css-extract-plugin")//js中的css合成一个css文件 ？
 //const ExtractTextWebpackPlugin = require('extract-text-webpack-plugin') //多css
 //模式 
-//const devMode = process.argv.indexOf('build/webpack.prod.js') === -1;
-
-const devMode = process.env.npm_lifecycle_event.indexOf("prod") === -1
+const devMode = process.argv.indexOf("build/webpack.prod.js") === -1
+// const devMode = process.env.npm_lifecycle_event.indexOf("prod") === -1
+console.log(process.env)
 console.log("现在的环境：" + process.env.npm_lifecycle_event)
-//console.log(process.env.npm_lifecycle_event)
-
-module.exports = { 
-
+//  .env 文件加载到 process.env https://segmentfault.com/a/1190000039225240
+// dotenv.config();
+module.exports = {
   // 入口文件 如果 polyfill 解决新api问题
   entry: [path.resolve(__dirname, "../src/main.js")],
   //导出
@@ -31,6 +30,15 @@ module.exports = {
   },
   //插件
   plugins: [
+    // webpack node读取环境变量文件再传到js文件
+    // https://stackoverflow.com/questions/30239060/uncaught-referenceerror-process-is-not-defined
+    new webpack.DefinePlugin({
+      "process.env.ROOT_API": JSON.stringify(devMode?"https://127.0.0.1:8080/":"https://levani.cn:8080/"),
+      "process.env.HOSTNAME": JSON.stringify(devMode?"127.0.0.1:8080":"levani.cn:8080")
+    }),
+    new EncodingPlugin({
+      encoding: "UTF-8"
+    }),
     //jquery  https://www.jianshu.com/p/1112e0239515
     new webpack.ProvidePlugin({
       $: "jquery",

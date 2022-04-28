@@ -19,7 +19,7 @@ const WebpackMerge = require("webpack-merge")
 // })
 
 module.exports = WebpackMerge.merge(webpackConfig,{
-  mode:"development", 
+  mode:"development",
   devServer: { 
     static: { 
       directory: path.resolve(__dirname, "../public"), 

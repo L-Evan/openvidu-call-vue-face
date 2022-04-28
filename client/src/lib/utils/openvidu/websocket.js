@@ -1,4 +1,5 @@
 import { getValueByURL } from "@/utils/index"
+import axios from "axios"
 // import { Base64 } from "js-base64"
 import { tokenService } from "@/lib/utils/openvidu/openviduToken"
 
@@ -53,7 +54,10 @@ class WebSocketMeet {
     console.log("params:", params)
     const { token, sessionId } = params
     // wss://127.0.0.1:8080/websocket/badao
-    const wsuri = `wss://${window.location.hostname}:8080/websocket/${sessionName}/${sessionId}/${token}`
+    // axios.getUri()
+    const hostname = process.env.HOSTNAME //window.location.hostname
+
+    const wsuri = `wss://${hostname}/websocket/${sessionName}/${sessionId}/${token}`
     console.log("url now", wsuri)
     this.ws = wsuri
     if (!this.initialTokenStatus) return
